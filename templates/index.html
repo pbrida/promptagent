@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PromptAgent</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-2xl font-bold text-blue-700 mb-4">PromptAgent</h1>
+
+    <label class="block mb-2 font-semibold">Select Category</label>
+    <select id="category" class="w-full p-2 border rounded mb-4">
+      <option>Listing Description</option>
+      <option>Buyer Follow-Up</option>
+      <option>Social Media Post</option>
+    </select>
+
+    <label class="block mb-2 font-semibold">Your Input</label>
+    <div class="flex items-start gap-2 mb-4">
+      <textarea id="input" class="w-full p-2 border rounded h-24" placeholder="Type your prompt or click 🎙 to speak..."></textarea>
+      <button id="voiceBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded" title="Click to speak">🎙️</button>
+    </div>
+
+    <button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Generate</button>
+
+    <h2 class="mt-6 font-bold">AI Response</h2>
+    <pre id="output" class="whitespace-pre-wrap bg-gray-200 p-4 rounded mt-2 text-sm"></pre>
+  </div>
+
+  <script>
+    // Generate button logic
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+      const input = document.getElementById("input").value;
+      const category = document.getElementById("category").value;
+
+      const response = await fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input, category })
+      });
+
+      const data = await response.json();
+      document.getElementById("output").textContent = data.result || data.error;
+    });
+
+    // Voice-to-text button logic
+    document.getElementById("voiceBtn").addEventListener("click", () => {
+      // Ensure HTTPS or localhost
+      if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
+        alert("Voice input only works on HTTPS or localhost.");
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        alert("Sorry, your browser doesn't support voice input. Try Chrome.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = (event) => {
+        const spokenText = event.results[0][0].transcript;
+        const inputBox = document.getElementById("input");
+        inputBox.value += (inputBox.value ? " " : "") + spokenText;
+      };
+
+      recognition.onerror = (event) => {
+        alert("Voice input failed: " + event.error);
+      };
+
+      recognition.start();
+    });
+  </script>
+</body>
+</html>
+
+
