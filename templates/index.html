@@ -11,16 +11,24 @@
   <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
     <h1 class="text-2xl font-bold text-blue-700 mb-4">PromptAgent</h1>
 
-    <!-- 🔐 Stripe Subscribe Button -->
-    <button id="subscribeBtn" class="mt-4 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 w-full">
-      🔐 Subscribe to PromptAgent Pro
-    </button>
-
+<!-- 🔐 Stripe Subscribe Button -->
+<button id="subscribeBtn" class="mt-4 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 w-full">
+  🔐 Subscribe to PromptAgent Pro
+</button>
+   
+   
     <!-- 🟣 Daily Post Generator Button -->
     <div class="mb-4 mt-4">
       <button id="dailyPostBtn" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full">
         ✨ Generate Today's Social Post
       </button>
+    </div>
+
+    <!-- 🔁 Regenerate Controls -->
+    <div id="regenerateSection" class="hidden mt-4">
+      <label class="block text-sm font-medium mb-1">Tweak the response (optional)</label>
+      <input id="regenerateTweak" class="w-full p-2 border rounded mb-2" placeholder="Add details, change tone, etc..." />
+      <button id="regenerateBtn" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 w-full">🔁 Regenerate</button>
     </div>
 
     <!-- Prompt Template Dropdown -->
@@ -48,6 +56,11 @@
     <!-- Generate Button -->
     <button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Generate</button>
 
+    <!-- Spinner -->
+    <div id="loadingSpinner" class="hidden mt-2 text-blue-600 text-sm animate-pulse">
+      Generating, please wait...
+    </div>
+
     <!-- AI Output -->
     <h2 class="mt-6 font-bold">AI Response</h2>
     <pre id="output" class="whitespace-pre-wrap bg-gray-200 p-4 rounded mt-2 text-sm"></pre>
@@ -57,119 +70,185 @@
     <button id="saveBtn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">💾 Save to Library</button>
   </div>
 
-  <script>
-    // ✅ Load Prompt Templates
-    fetch("/api/prompts")
-      .then(res => res.json())
-      .then(data => {
-        const dropdown = document.getElementById("category");
-        dropdown.innerHTML = "";
-        data.forEach(template => {
-          const option = document.createElement("option");
-          option.value = template.id;
-          option.textContent = template.label;
-          dropdown.appendChild(option);
-        });
+<script>
+  // ✅ Load Prompt Templates
+  fetch("/api/prompts")
+    .then(res => res.json())
+    .then(data => {
+      const dropdown = document.getElementById("category");
+      dropdown.innerHTML = "";
+      data.forEach(template => {
+        const option = document.createElement("option");
+        option.value = template.id;
+        option.textContent = template.label;
+        dropdown.appendChild(option);
+      });
+    })
+    .catch(err => {
+      console.error("Failed to load prompts:", err);
+      alert("Error loading prompt templates.");
+    });
+
+  // ✅ Voice Input
+  document.getElementById("voiceBtn").addEventListener("click", () => {
+    if (
+      location.protocol !== "https:" &&
+      location.hostname !== "localhost" &&
+      location.hostname !== "127.0.0.1"
+    ) {
+      alert("Voice input only works on HTTPS or localhost.");
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser doesn't support voice input.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const spokenText = event.results[0][0].transcript;
+      const inputBox = document.getElementById("input");
+      inputBox.value += (inputBox.value ? " " : "") + spokenText;
+    };
+
+    recognition.onerror = (event) => {
+      alert("Voice input error: " + event.error);
+    };
+
+    recognition.start();
+  });
+
+  // ✅ Show Regenerate UI
+  function showRegenerate() {
+    document.getElementById("regenerateSection").classList.remove("hidden");
+  }
+
+  // 🔁 Track Last Prompt State
+  let lastPromptInput = "";
+  let lastCategory = "";
+  let lastTone = "";
+
+  // ✅ Generate Button
+  document.getElementById("generateBtn").addEventListener("click", async () => {
+    const input = document.getElementById("input").value;
+    const category = document.getElementById("category").value;
+    const tone = document.getElementById("tone").value;
+    const spinner = document.getElementById("loadingSpinner");
+
+    lastPromptInput = input;
+    lastCategory = category;
+    lastTone = tone;
+
+    spinner.textContent = "Generating, please wait...";
+    spinner.classList.remove("hidden");
+
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input, category, tone })
+    });
+
+    const data = await response.json();
+    document.getElementById("output").textContent = data.result || data.error;
+
+    spinner.classList.add("hidden");
+    showRegenerate();
+  });
+
+  // ✅ Daily Post Button
+  document.getElementById("dailyPostBtn").addEventListener("click", async () => {
+    const spinner = document.getElementById("loadingSpinner");
+    spinner.textContent = "Generating today's post, please wait...";
+    spinner.classList.remove("hidden");
+
+    const today = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+
+    const prompt = `Create a short, engaging real estate Instagram/Facebook post for ${today}. Include 2-3 hashtags and a call to action.`;
+
+    lastPromptInput = prompt;
+    lastCategory = "instagram_post";
+    lastTone = "";
+
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input: prompt, category: "instagram_post", tone: "" })
+    });
+
+    const data = await response.json();
+    document.getElementById("output").textContent = data.result || data.error;
+
+    spinner.classList.add("hidden");
+    showRegenerate();
+  });
+
+  // 🔁 Regenerate Button
+  document.getElementById("regenerateBtn").addEventListener("click", async () => {
+    const tweak = document.getElementById("regenerateTweak").value.trim();
+    const spinner = document.getElementById("loadingSpinner");
+
+    spinner.textContent = "Tweaking response, please wait...";
+    spinner.classList.remove("hidden");
+
+    const prompt = tweak ? `${lastPromptInput} ${tweak}` : lastPromptInput;
+
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: prompt,
+        category: lastCategory,
+        tone: lastTone
       })
-      .catch(err => {
-        console.error("Failed to load prompts:", err);
-        alert("Error loading prompt templates.");
-      });
+    });
 
-    // ✅ Generate Response
-    document.getElementById("generateBtn").addEventListener("click", async () => {
-      const input = document.getElementById("input").value;
-      const category = document.getElementById("category").value;
-      const tone = document.getElementById("tone").value;
+    const data = await response.json();
+    document.getElementById("output").textContent = data.result || data.error;
 
-      const response = await fetch("/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input, category, tone })
-      });
+    spinner.textContent = "Generating, please wait...";
+    spinner.classList.add("hidden");
+  });
 
+  // ✅ Save to Library
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    const content = document.getElementById("output").textContent.trim();
+    if (!content) {
+      alert("No content to save.");
+      return;
+    }
+
+    const saved = JSON.parse(localStorage.getItem("library") || "[]");
+    saved.push({ text: content, timestamp: new Date().toISOString() });
+    localStorage.setItem("library", JSON.stringify(saved));
+    alert("Saved to library!");
+  });
+
+  // 🔐 Stripe Subscribe Button
+  document.getElementById("subscribeBtn").addEventListener("click", async () => {
+    try {
+      const response = await fetch("/subscribe", { method: "POST" });
       const data = await response.json();
-      document.getElementById("output").textContent = data.result || data.error;
-    });
-
-    // ✅ Voice Input
-    document.getElementById("voiceBtn").addEventListener("click", () => {
-      if (location.protocol !== "https:" && location.hostname !== "localhost" && location.hostname !== "127.0.0.1") {
-        alert("Voice input only works on HTTPS or localhost.");
-        return;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Stripe error: " + (data.error || "Unknown issue"));
       }
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("Your browser doesn't support voice input.");
-        return;
-      }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onresult = (event) => {
-        const spokenText = event.results[0][0].transcript;
-        const inputBox = document.getElementById("input");
-        inputBox.value += (inputBox.value ? " " : "") + spokenText;
-      };
-
-      recognition.onerror = (event) => {
-        alert("Voice input error: " + event.error);
-      };
-
-      recognition.start();
-    });
-
-    // ✅ Daily Post Button
-    document.getElementById("dailyPostBtn").addEventListener("click", async () => {
-      const today = new Date().toLocaleDateString("en-US", {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      });
-
-      const prompt = `Create a short, engaging real estate Instagram/Facebook post for ${today}. Include 2-3 hashtags and a call to action.`;
-
-      const response = await fetch("/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: prompt, category: "instagram_post", tone: "" })
-      });
-
-      const data = await response.json();
-      document.getElementById("output").textContent = data.result || data.error;
-    });
-
-    // ✅ Save to Library
-    document.getElementById("saveBtn").addEventListener("click", () => {
-      const content = document.getElementById("output").textContent.trim();
-      if (!content) {
-        alert("No content to save.");
-        return;
-      }
-
-      const saved = JSON.parse(localStorage.getItem("library") || "[]");
-      saved.push({ text: content, timestamp: new Date().toISOString() });
-      localStorage.setItem("library", JSON.stringify(saved));
-      alert("Saved to library!");
-    });
-
-    // ✅ Stripe Subscribe Button
-    document.getElementById("subscribeBtn").addEventListener("click", async () => {
-      try {
-        const response = await fetch("/subscribe", { method: "POST" });
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert("Stripe error: " + (data.error || "Unknown issue"));
-        }
-      } catch (err) {
-        console.error("Stripe error:", err);
-        alert("An error occurred. Please try again.");
-      }
-    });
-  </script>
+    } catch (err) {
+      console.error("Stripe error:", err);
+      alert("An error occurred. Please try again.");
+    }
+  });
+</script>
 </body>
 </html>
