@@ -1,0 +1,22 @@
+[
+  {
+    "id": "listing_description",
+    "label": "Listing Description",
+    "template": "Write a compelling listing description for a {property_type} at {address}. Key features: {features}. Price: {price}. Agent: {agent_name}."
+  },
+  {
+    "id": "instagram_post",
+    "label": "Instagram Post",
+    "template": "Write an engaging Instagram post for a {property_type} listing at {address}. Include emojis, hashtags, and a strong CTA."
+  },
+  {
+    "id": "fsbo_dm",
+    "label": "FSBO DM",
+    "template": "Write a friendly DM to a For Sale By Owner lead introducing myself as a local real estate agent who helps FSBO sellers get more offers and close faster."
+  },
+  {
+    "id": "text_follow_up",
+    "label": "Text Follow-Up",
+    "template": "Write a casual follow-up text message to a lead who recently toured a property. Keep it short and open-ended."
+  }
+]
