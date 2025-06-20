@@ -11,7 +11,12 @@
   <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
     <h1 class="text-2xl font-bold text-blue-700 mb-4">PromptAgent</h1>
 
-<!-- 🔐 Stripe Subscribe Button -->
+<!-- 🔢 Usage Counter -->
+<div id="usageCounter" class="text-sm font-medium text-right text-gray-600 mb-2 hidden">
+  Prompts used: <span id="usedCount">0</span> of 5
+</div>
+
+    <!-- 🔐 Stripe Subscribe Button -->
 <button id="subscribeBtn" class="mt-4 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 w-full">
   🔐 Subscribe to PromptAgent Pro
 </button>
@@ -61,6 +66,11 @@
       Generating, please wait...
     </div>
 
+    <!-- 🔄 Reset Usage Button (Testing Only) -->
+<button onclick="fetch('/reset-usage').then(res => res.text()).then(alert)" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 w-full">
+  🔄 Reset Usage (Dev Only)
+</button>
+
     <!-- AI Output -->
     <h2 class="mt-6 font-bold">AI Response</h2>
     <pre id="output" class="whitespace-pre-wrap bg-gray-200 p-4 rounded mt-2 text-sm"></pre>
@@ -88,6 +98,156 @@
       console.error("Failed to load prompts:", err);
       alert("Error loading prompt templates.");
     });
+
+  // ✅ Show Regenerate UI
+  function showRegenerate() {
+    document.getElementById("regenerateSection").classList.remove("hidden");
+  }
+
+  // ✅ Update Usage Counter
+  function updateUsageCounter(used, limit) {
+    const counter = document.getElementById("usageCounter");
+    const usedSpan = document.getElementById("usedCount");
+    usedSpan.textContent = used;
+    counter.classList.remove("hidden");
+    if (used >= limit) {
+      disableActions();
+    }
+  }
+
+  function disableActions() {
+  document.getElementById("generateBtn").disabled = true;
+  document.getElementById("regenerateBtn").disabled = true;
+  document.getElementById("dailyPostBtn").disabled = true;
+
+  const output = document.getElementById("output");
+  output.textContent = "🚫 Prompt limit reached. Please upgrade to Pro for unlimited access.";
+
+  // ✅ Inject Upgrade Button if not already there
+  if (!document.getElementById("upgradeBtn")) {
+    const btn = document.createElement("button");
+    btn.id = "upgradeBtn";
+    btn.className = "mt-4 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 w-full";
+    btn.textContent = "🔐 Upgrade to Pro";
+    btn.onclick = () => document.getElementById("subscribeBtn").click();
+    document.querySelector(".max-w-xl").appendChild(btn);
+  }
+}
+
+ // ✅ Apply Pro status on page load if stored in localStorage
+function reflectProStatus() {
+  const counter = document.getElementById("usageCounter");
+  const isPro = localStorage.getItem("isPro") === "true";
+
+  if (isPro) {
+    counter.innerHTML = "👑 Pro: <span class='text-green-700 font-bold'>Unlimited prompts</span>";
+    counter.classList.remove("text-right", "text-gray-600", "hidden");
+    counter.classList.add("text-green-600", "text-left");
+  } else {
+    counter.innerHTML = 'Prompts used: <span id="usedCount">0</span> of 5';
+    counter.classList.remove("text-left", "text-green-600");
+    counter.classList.add("text-right", "text-gray-600");
+    counter.classList.remove("hidden");
+  }
+}
+
+reflectProStatus(); // ✅ Call it right after defining
+
+
+
+  // ✅ Track Last Prompt
+  let lastPromptInput = "";
+  let lastCategory = "";
+  let lastTone = "";
+
+  // ✅ Generate Button
+  document.getElementById("generateBtn").addEventListener("click", async () => {
+    const input = document.getElementById("input").value;
+    const category = document.getElementById("category").value;
+    const tone = document.getElementById("tone").value;
+    const spinner = document.getElementById("loadingSpinner");
+
+    lastPromptInput = input;
+    lastCategory = category;
+    lastTone = tone;
+
+    spinner.textContent = "Generating, please wait...";
+    spinner.classList.remove("hidden");
+
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input, category, tone })
+    });
+
+    const data = await response.json();
+    document.getElementById("output").textContent = data.result || data.error;
+
+    if (data.usage) updateUsageCounter(data.usage.count, data.usage.limit);
+    spinner.classList.add("hidden");
+    showRegenerate();
+  });
+
+  // ✅ Daily Post Button
+  document.getElementById("dailyPostBtn").addEventListener("click", async () => {
+    const spinner = document.getElementById("loadingSpinner");
+    spinner.textContent = "Generating today's post, please wait...";
+    spinner.classList.remove("hidden");
+
+    const today = new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+
+    const prompt = `Create a short, engaging real estate Instagram/Facebook post for ${today}. Include 2-3 hashtags and a call to action.`;
+
+    lastPromptInput = prompt;
+    lastCategory = "instagram_post";
+    lastTone = "";
+
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ input: prompt, category: "instagram_post", tone: "" })
+    });
+
+    const data = await response.json();
+    document.getElementById("output").textContent = data.result || data.error;
+
+    if (data.usage) updateUsageCounter(data.usage.count, data.usage.limit);
+    spinner.classList.add("hidden");
+    showRegenerate();
+  });
+
+  // 🔁 Regenerate Button
+  document.getElementById("regenerateBtn").addEventListener("click", async () => {
+    const tweak = document.getElementById("regenerateTweak").value.trim();
+    const spinner = document.getElementById("loadingSpinner");
+
+    spinner.textContent = "Tweaking response, please wait...";
+    spinner.classList.remove("hidden");
+
+    const prompt = tweak ? `${lastPromptInput} ${tweak}` : lastPromptInput;
+
+    const response = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        input: prompt,
+        category: lastCategory,
+        tone: lastTone
+      })
+    });
+
+    const data = await response.json();
+    document.getElementById("output").textContent = data.result || data.error;
+
+    if (data.usage) updateUsageCounter(data.usage.count, data.usage.limit);
+    spinner.textContent = "Generating, please wait...";
+    spinner.classList.add("hidden");
+  });
 
   // ✅ Voice Input
   document.getElementById("voiceBtn").addEventListener("click", () => {
@@ -124,102 +284,6 @@
     recognition.start();
   });
 
-  // ✅ Show Regenerate UI
-  function showRegenerate() {
-    document.getElementById("regenerateSection").classList.remove("hidden");
-  }
-
-  // 🔁 Track Last Prompt State
-  let lastPromptInput = "";
-  let lastCategory = "";
-  let lastTone = "";
-
-  // ✅ Generate Button
-  document.getElementById("generateBtn").addEventListener("click", async () => {
-    const input = document.getElementById("input").value;
-    const category = document.getElementById("category").value;
-    const tone = document.getElementById("tone").value;
-    const spinner = document.getElementById("loadingSpinner");
-
-    lastPromptInput = input;
-    lastCategory = category;
-    lastTone = tone;
-
-    spinner.textContent = "Generating, please wait...";
-    spinner.classList.remove("hidden");
-
-    const response = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input, category, tone })
-    });
-
-    const data = await response.json();
-    document.getElementById("output").textContent = data.result || data.error;
-
-    spinner.classList.add("hidden");
-    showRegenerate();
-  });
-
-  // ✅ Daily Post Button
-  document.getElementById("dailyPostBtn").addEventListener("click", async () => {
-    const spinner = document.getElementById("loadingSpinner");
-    spinner.textContent = "Generating today's post, please wait...";
-    spinner.classList.remove("hidden");
-
-    const today = new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
-
-    const prompt = `Create a short, engaging real estate Instagram/Facebook post for ${today}. Include 2-3 hashtags and a call to action.`;
-
-    lastPromptInput = prompt;
-    lastCategory = "instagram_post";
-    lastTone = "";
-
-    const response = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input: prompt, category: "instagram_post", tone: "" })
-    });
-
-    const data = await response.json();
-    document.getElementById("output").textContent = data.result || data.error;
-
-    spinner.classList.add("hidden");
-    showRegenerate();
-  });
-
-  // 🔁 Regenerate Button
-  document.getElementById("regenerateBtn").addEventListener("click", async () => {
-    const tweak = document.getElementById("regenerateTweak").value.trim();
-    const spinner = document.getElementById("loadingSpinner");
-
-    spinner.textContent = "Tweaking response, please wait...";
-    spinner.classList.remove("hidden");
-
-    const prompt = tweak ? `${lastPromptInput} ${tweak}` : lastPromptInput;
-
-    const response = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        input: prompt,
-        category: lastCategory,
-        tone: lastTone
-      })
-    });
-
-    const data = await response.json();
-    document.getElementById("output").textContent = data.result || data.error;
-
-    spinner.textContent = "Generating, please wait...";
-    spinner.classList.add("hidden");
-  });
-
   // ✅ Save to Library
   document.getElementById("saveBtn").addEventListener("click", () => {
     const content = document.getElementById("output").textContent.trim();
@@ -234,21 +298,37 @@
     alert("Saved to library!");
   });
 
-  // 🔐 Stripe Subscribe Button
-  document.getElementById("subscribeBtn").addEventListener("click", async () => {
-    try {
-      const response = await fetch("/subscribe", { method: "POST" });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Stripe error: " + (data.error || "Unknown issue"));
-      }
-    } catch (err) {
-      console.error("Stripe error:", err);
-      alert("An error occurred. Please try again.");
+  // ✅ Stripe Subscribe Button
+document.getElementById("subscribeBtn").addEventListener("click", async () => {
+  try {
+    localStorage.setItem("isPro", "true"); // ✅ Mark user as Pro (for persistence)
+    const response = await fetch("/subscribe", { method: "POST" });
+    const data = await response.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      alert("Stripe error: " + (data.error || "Unknown issue"));
     }
+  } catch (err) {
+    console.error("Stripe error:", err);
+    alert("An error occurred. Please try again.");
+  }
+});
+// ✅ Check backend session and sync localStorage status
+fetch("/api/user-status")
+  .then(res => res.json())
+  .then(data => {
+    if (data.isPro) {
+      localStorage.setItem("isPro", "true");
+    } else {
+      localStorage.removeItem("isPro");
+    }
+    reflectProStatus(); // Re-run to update UI
+  })
+  .catch(err => {
+    console.error("Failed to fetch user status", err);
   });
+
 </script>
 </body>
 </html>
