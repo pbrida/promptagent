@@ -24,12 +24,41 @@
     <div id="regenerateSection" class="hidden mt-4">
       <label class="block text-sm font-medium mb-1">Tweak the response (optional)</label>
       <input id="regenerateTweak" class="w-full p-2 border rounded mb-2" placeholder="Add details, change tone, etc..." />
-      <button id="regenerateBtn" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 w-full">🔁 Regenerate</button>
+
+      <div id="tweakFeedback" class="hidden text-green-600 font-semibold text-sm mt-2">
+        ✅ Response updated using your tweak!
+      </div>
+
+      <div id="tweakSuggestions" class="text-xs text-gray-600 mt-1 space-x-2 flex flex-wrap gap-2"></div>
+      <button id="getSuggestionsBtn" class="text-sm bg-gray-200 hover:bg-yellow-200 text-black px-3 py-1 rounded mb-2"> 💡 Get Smart Suggestions</button>
+
+      <button id="regenerateBtn" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 w-full">🔁 Regenerate</button>
     </div>
+
+    <!-- 📥 Client Message Responder -->
+    <div id="clientResponder" class="mt-6">
+      <label class="block mb-2 font-semibold">Client Message</label>
+      <textarea id="clientMessage" class="w-full p-2 border rounded mb-2 h-24" placeholder="Paste client message or question here..."></textarea>
+
+      <div class="flex gap-2 mb-2">
+        <input type="file" id="imageUpload" accept="image/*" class="w-full" />
+        <button id="processImageBtn" class="bg-gray-300 px-3 py-2 rounded hover:bg-gray-400">🖼️ Upload Image</button>
+      </div>
+
+      <button id="generateReplyBtn" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 w-full">
+        ✍️ Draft Suggested Reply
+      </button>
+    </div>
+
+    <!-- ✅ Category Filter -->
+    <label class="block mb-2 font-semibold">Filter by Category</label>
+    <select id="categoryFilter" class="w-full p-2 border rounded mb-4">
+      <option value="All">All Categories</option>
+    </select>
 
     <label class="block mb-2 font-semibold">Select Prompt Template</label>
     <select id="category" class="w-full p-2 border rounded mb-4">
-      <option disabled selected>Loading templates...</option>
+      <option disabled selected value="">Loading templates...</option>
     </select>
 
     <label class="block mb-2 font-semibold">Select Tone</label>
@@ -52,7 +81,7 @@
       Generating, please wait...
     </div>
 
-    <button onclick="resetUsage()" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 w-full">🔄 Reset Usage (Dev Only)</button>
+    <button id="resetUsageBtn" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 w-full">🔄 Reset Usage (Dev Only)</button>
 
     <h2 class="mt-6 font-bold">AI Response</h2>
     <pre id="output" class="whitespace-pre-wrap bg-gray-200 p-4 rounded mt-2 text-sm"></pre>
@@ -60,209 +89,7 @@
     <button id="saveBtn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">💾 Save to Library</button>
   </div>
 
-<script>
-let isProUser = false;
-let lastPromptInput = "";
-let lastCategory = "";
-let lastTone = "";
-let lastWasDailyPost = false;
-
-fetch("/api/prompts")
-  .then(res => res.json())
-  .then(data => {
-    const dropdown = document.getElementById("category");
-    dropdown.innerHTML = "";
-    data.forEach(template => {
-      const option = document.createElement("option");
-      option.value = template.id;
-      option.textContent = template.label;
-      dropdown.appendChild(option);
-    });
-  });
-
-function updateUsageCounter(used, limit) {
-  const counter = document.getElementById("usageCounter");
-  if (used >= limit) {
-    counter.innerHTML = `🚫 Prompt limit reached: <span id="usedCount">${used}</span> of ${limit}`;
-  } else {
-    counter.innerHTML = `Prompts used: <span id="usedCount">${used}</span> of ${limit}`;
-  }
-  counter.classList.remove("hidden");
-  if (used >= limit) disableActions();
-}
-
-function reflectProStatus(isPro) {
-  const counter = document.getElementById("usageCounter");
-  if (isPro) {
-    counter.innerHTML = "👑 Pro: <span class='text-green-700 font-bold'>Unlimited prompts</span>";
-    counter.classList.remove("text-right", "text-gray-600", "hidden");
-    counter.classList.add("text-green-600", "text-left");
-  } else {
-    counter.classList.remove("text-left", "text-green-600");
-    counter.classList.add("text-right", "text-gray-600");
-  }
-}
-
-function checkUserStatus() {
-  fetch("/api/user-status")
-    .then(res => res.json())
-    .then(data => {
-      isProUser = data.isPro;
-      reflectProStatus(isProUser);
-      if (!isProUser && data.usage) updateUsageCounter(data.usage.count, data.usage.limit);
-      if (isProUser) {
-        document.getElementById("generateBtn").disabled = false;
-        document.getElementById("regenerateBtn").disabled = false;
-        document.getElementById("dailyPostBtn").disabled = false;
-        const upgradeBtn = document.getElementById("upgradeBtn");
-        if (upgradeBtn) upgradeBtn.remove();
-      }
-    });
-}
-checkUserStatus();
-
-function disableActions() {
-  document.getElementById("generateBtn").disabled = true;
-  document.getElementById("regenerateBtn").disabled = true;
-  document.getElementById("dailyPostBtn").disabled = true;
-  document.getElementById("output").textContent = "🚫 Prompt limit reached. Please upgrade to Pro.";
-  if (!document.getElementById("upgradeBtn")) {
-    const btn = document.createElement("button");
-    btn.id = "upgradeBtn";
-    btn.className = "mt-4 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 w-full";
-    btn.textContent = "🔐 Upgrade to Pro";
-    btn.onclick = () => document.getElementById("subscribeBtn").click();
-    document.querySelector(".max-w-xl").appendChild(btn);
-  }
-}
-
-function showRegenerate() {
-  document.getElementById("regenerateSection").classList.remove("hidden");
-}
-
-document.getElementById("generateBtn").addEventListener("click", async () => {
-  const input = document.getElementById("input").value;
-  const category = document.getElementById("category").value;
-  const tone = document.getElementById("tone").value;
-  const spinner = document.getElementById("loadingSpinner");
-
-  lastPromptInput = input;
-  lastCategory = category;
-  lastTone = tone;
-  lastWasDailyPost = false;
-
-  spinner.classList.remove("hidden");
-  spinner.textContent = "Generating, please wait...";
-
-  try {
-    const response = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input, category, tone })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Unknown error");
-
-    document.getElementById("output").textContent = data.result;
-    showRegenerate();
-
-    if (data.usage && typeof data.usage.count === "number") {
-      updateUsageCounter(data.usage.count, data.usage.limit);
-      if (data.usage.count >= data.usage.limit) disableActions();
-    }
-  } catch (err) {
-    document.getElementById("output").textContent = `❌ ${err.message}`;
-  } finally {
-    spinner.classList.add("hidden");
-  }
-});
-
-document.getElementById("regenerateBtn").addEventListener("click", async () => {
-  const tweak = document.getElementById("regenerateTweak").value.trim();
-  const spinner = document.getElementById("loadingSpinner");
-  spinner.classList.remove("hidden");
-  spinner.textContent = "Tweaking response, please wait...";
-
-  try {
-    let data;
-    if (lastWasDailyPost) {
-      const response = await fetch("/daily-post", { method: "POST" });
-      data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unknown error");
-    } else {
-      const prompt = tweak ? `${lastPromptInput} ${tweak}` : lastPromptInput;
-      const response = await fetch("/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: prompt, category: lastCategory, tone: lastTone })
-      });
-      data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Unknown error");
-
-      if (data.usage && typeof data.usage.count === "number") {
-        updateUsageCounter(data.usage.count, data.usage.limit);
-        if (data.usage.count >= data.usage.limit) disableActions();
-      }
-    }
-    document.getElementById("output").textContent = data.result;
-  } catch (err) {
-    document.getElementById("output").textContent = `❌ ${err.message}`;
-  } finally {
-    spinner.classList.add("hidden");
-  }
-});
-
-document.getElementById("dailyPostBtn").addEventListener("click", async () => {
-  const spinner = document.getElementById("loadingSpinner");
-  spinner.classList.remove("hidden");
-  spinner.textContent = "Generating today’s post...";
-
-  try {
-    const response = await fetch("/daily-post", { method: "POST" });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Unknown error");
-    document.getElementById("output").textContent = data.result;
-    lastWasDailyPost = true;
-    showRegenerate();
-  } catch (err) {
-    document.getElementById("output").textContent = `❌ ${err.message}`;
-  } finally {
-    spinner.classList.add("hidden");
-  }
-});
-
-document.getElementById("subscribeBtn").addEventListener("click", async () => {
-  try {
-    const response = await fetch("/subscribe", { method: "POST" });
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-    else alert("Stripe error: " + (data.error || "Unknown issue"));
-  } catch (err) {
-    alert("An error occurred. Please try again.");
-  }
-});
-
-function resetUsage() {
-  fetch('/reset-usage')
-    .then(res => res.text())
-    .then(msg => {
-      alert(msg);
-      return fetch("/api/user-status");
-    })
-    .then(res => res.json())
-    .then(data => {
-      reflectProStatus(data.isPro);
-      if (!data.isPro && data.usage) updateUsageCounter(data.usage.count, data.usage.limit);
-      document.getElementById("generateBtn").disabled = false;
-      document.getElementById("regenerateBtn").disabled = false;
-      document.getElementById("dailyPostBtn").disabled = false;
-      const upgradeBtn = document.getElementById("upgradeBtn");
-      if (upgradeBtn) upgradeBtn.remove();
-      document.getElementById("output").textContent = "";
-    });
-}
-</script>
+  <!-- ✅ Load frontend logic from static file -->
+  <script src="/static/main.js"></script>
 </body>
 </html>
-

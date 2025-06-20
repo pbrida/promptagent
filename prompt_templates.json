@@ -1,22 +1,182 @@
 [
   {
-    "id": "listing_description",
-    "label": "Listing Description",
-    "template": "Write a compelling listing description for a {property_type} at {address}. Key features: {features}. Price: {price}. Agent: {agent_name}."
+    "id": "buyer-tip-first",
+    "label": "Tip for First-Time Buyers",
+    "template": "Share a helpful tip for someone buying their first home.",
+    "category": "Buyers"
   },
   {
-    "id": "instagram_post",
-    "label": "Instagram Post",
-    "template": "Write an engaging Instagram post for a {property_type} listing at {address}. Include emojis, hashtags, and a strong CTA."
+    "id": "buyer-loan-prep",
+    "label": "Preparing for Mortgage",
+    "template": "Explain how buyers can prepare to get approved for a home loan.",
+    "category": "Buyers"
   },
   {
-    "id": "fsbo_dm",
-    "label": "FSBO DM",
-    "template": "Write a friendly DM to a For Sale By Owner lead introducing myself as a local real estate agent who helps FSBO sellers get more offers and close faster."
+    "id": "buyer-tour-reminder",
+    "label": "Showing Tour Reminder",
+    "template": "Create a friendly reminder post about what buyers should bring to a home tour.",
+    "category": "Buyers"
   },
   {
-    "id": "text_follow_up",
-    "label": "Text Follow-Up",
-    "template": "Write a casual follow-up text message to a lead who recently toured a property. Keep it short and open-ended."
+    "id": "seller-staging-tip",
+    "label": "Home Staging Tip",
+    "template": "Share a smart staging tip that helps homes sell faster.",
+    "category": "Sellers"
+  },
+  {
+    "id": "seller-price-post",
+    "label": "Pricing Strategy Insight",
+    "template": "Explain the importance of pricing a home right when listing.",
+    "category": "Sellers"
+  },
+  {
+    "id": "seller-listing-day",
+    "label": "Best Day to List",
+    "template": "Discuss which day of the week is statistically best to list a home and why.",
+    "category": "Sellers"
+  },
+  {
+    "id": "just-listed-announcement",
+    "label": "Just Listed",
+    "template": "Announce a new listing with excitement and urgency.",
+    "category": "Marketing"
+  },
+  {
+    "id": "open-house-reminder",
+    "label": "Open House Invite",
+    "template": "Create a friendly social post inviting people to an open house.",
+    "category": "Marketing"
+  },
+  {
+    "id": "under-contract-post",
+    "label": "Under Contract Update",
+    "template": "Share the news that a property just went under contract.",
+    "category": "Marketing"
+  },
+  {
+    "id": "just-sold-story",
+    "label": "Just Sold Recap",
+    "template": "Write a success story about a recent closing to celebrate with your followers.",
+    "category": "Marketing"
+  },
+  {
+    "id": "client-preapproval",
+    "label": "What is Pre-Approval?",
+    "template": "Explain the value of getting pre-approved before home shopping.",
+    "category": "Explain It"
+  },
+  {
+    "id": "client-escrow",
+    "label": "What is Escrow?",
+    "template": "Break down what escrow means during a real estate transaction.",
+    "category": "Explain It"
+  },
+  {
+    "id": "client-closing-costs",
+    "label": "Closing Costs Explained",
+    "template": "Explain what closing costs are and who typically pays them.",
+    "category": "Explain It"
+  },
+  {
+    "id": "fall-maintenance",
+    "label": "Fall Maintenance Tip",
+    "template": "Share a helpful seasonal tip for fall home maintenance.",
+    "category": "Seasonal"
+  },
+  {
+    "id": "spring-declutter",
+    "label": "Spring Decluttering",
+    "template": "Give your audience a fresh spring decluttering checklist.",
+    "category": "Seasonal"
+  },
+  {
+    "id": "winter-insulation",
+    "label": "Winter Weatherization",
+    "template": "Share a winter tip for keeping energy bills low at home.",
+    "category": "Seasonal"
+  },
+  {
+    "id": "holiday-giveaway",
+    "label": "Holiday Giveaway Promo",
+    "template": "Create a cheerful holiday post with a small giveaway for engagement.",
+    "category": "Seasonal"
+  },
+  {
+    "id": "local-market-report",
+    "label": "Market Update",
+    "template": "Summarize the current housing market stats for your city this month.",
+    "category": "Local"
+  },
+  {
+    "id": "neighborhood-highlight",
+    "label": "Neighborhood Feature",
+    "template": "Highlight a local neighborhood and why it’s a great place to live.",
+    "category": "Local"
+  },
+  {
+    "id": "small-biz-shoutout",
+    "label": "Local Business Shoutout",
+    "template": "Feature a local business you love and tag them in your post.",
+    "category": "Local"
+  },
+  {
+    "id": "daily-mindset",
+    "label": "Mindset Motivation",
+    "template": "Share a short motivational post to inspire buyers and sellers today.",
+    "category": "Daily Inspiration"
+  },
+  {
+    "id": "agent-intro-post",
+    "label": "Agent Intro",
+    "template": "Write a warm introduction post for yourself as a real estate agent.",
+    "category": "Personal Branding"
+  },
+  {
+    "id": "agent-bio-fun",
+    "label": "Fun Bio Post",
+    "template": "Share a fun fact or story from your real estate journey.",
+    "category": "Personal Branding"
+  },
+  {
+    "id": "client-review-share",
+    "label": "Client Testimonial",
+    "template": "Turn a client testimonial into a friendly social media post.",
+    "category": "Testimonials"
+  },
+  {
+    "id": "client-review-beforeafter",
+    "label": "Before/After Client Story",
+    "template": "Share a quick story of where your client started and how you helped them win.",
+    "category": "Testimonials"
+  },
+  {
+    "id": "faq-downpayment",
+    "label": "Down Payment Myth",
+    "template": "Dispel a common myth about how much down payment is needed to buy a home.",
+    "category": "FAQs"
+  },
+  {
+    "id": "faq-zillow",
+    "label": "Why Not Zillow?",
+    "template": "Explain gently why buyers shouldn't rely only on Zillow or big portals.",
+    "category": "FAQs"
+  },
+  {
+    "id": "realtor-tip-ethics",
+    "label": "Realtor Ethics Tip",
+    "template": "Share a quick reminder about professionalism and ethics in real estate.",
+    "category": "Agent Tips"
+  },
+  {
+    "id": "realtor-tip-openhouse",
+    "label": "Open House Hosting Tip",
+    "template": "Give advice to new agents on how to host a winning open house.",
+    "category": "Agent Tips"
+  },
+  {
+    "id": "weekend-promo",
+    "label": "Weekend Real Estate Reminder",
+    "template": "Create a weekend-friendly post reminding followers to book showings or check out listings.",
+    "category": "Daily Inspiration"
   }
 ]
