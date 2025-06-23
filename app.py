@@ -1,20 +1,22 @@
-import stripe
-from flask import Flask, render_template, request, jsonify, session
-from openai import OpenAI
-from dotenv import load_dotenv
 import os
+from openai import OpenAI
+from flask import Flask, render_template, request, jsonify, session, redirect
+from dotenv import load_dotenv
+import stripe
 import json
 from PIL import Image
 import pytesseract
+from datetime import datetime, timezone
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+pytesseract.pytesseract.tesseract_cmd = r"C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+
 # ✅ Load environment variables
 load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
-client = OpenAI()
 app = Flask(__name__, static_url_path='/static', static_folder='static')
-
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret")  # ✅ Required for session support
 
 # ✅ Load prompt templates
@@ -22,16 +24,68 @@ with open("prompt_templates.json", "r") as f:
     prompt_templates = json.load(f)
 
 # ✅ Limit check
-def has_exceeded_prompt_limit():
-    return session.get("prompt_count", 0) >= 5 and not session.get("is_pro", False)
+MAX_USES = 5
+def has_exceeded_usage():
+    return session.get("usage_count", 0) >= MAX_USES and not session.get("is_pro", False)
 
-# ✅ Daily post check
-def has_used_daily_post():
-    return session.get("used_daily_post", False) and not session.get("is_pro", False)
+
+def generate_daily_post_for_date(date_str):
+    prompt = (
+        f"Write a short, engaging real estate-related social media post for agents to share on {date_str}. "
+        f"Make it inspirational, educational, or market-insightful—but not about a specific listing. "
+        f"Limit it to under 280 characters and make it suitable for Instagram, Facebook, or Twitter."
+    )
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    return response.choices[0].message.content.strip()
+
+@app.route("/daily-post", methods=["POST"])
+def daily_post():
+   
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    if not session.get("is_pro", False):
+        last_used_date = session.get("daily_post_date")
+        if last_used_date == today_str:
+            return jsonify({
+            "error": "⛔ You've already used today's Daily Post. Upgrade to Pro for unlimited access.",
+            "blocked": True,
+            "usage": {"count": session.get("usage_count", 0), "limit": MAX_USES}
+        }), 403  # Forcefully block regenerate attempts
+    session["daily_post_date"] = today_str
+
+
+    result = generate_daily_post_for_date(today_str)
+    return jsonify({
+        "result": result,
+        "usage": {"count": session.get("usage_count", 0), "limit": MAX_USES}
+    })
+
+@app.route("/reset-usage")
+def reset_usage():
+    session["usage_count"] = 0
+    session["daily_post_date"] = None
+    return "Usage and daily post date reset."
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
+
+@app.route("/api/user-status")
+def user_status():
+    if "is_pro" in session:
+        is_pro = session.get("is_pro", False)
+    else:
+        pro_param = request.args.get("pro", "true").lower()
+        is_pro = pro_param == "true"
+        session["is_pro"] = is_pro
+
+    usage = {"count": session.get("usage_count", 0), "limit": MAX_USES} if not is_pro else {"count": 0, "limit": 9999}
+    return jsonify({"isPro": is_pro, "usage": usage})
+
 @app.route("/regenerate", methods=["POST"])
 def regenerate():
     data = request.get_json()
@@ -41,9 +95,8 @@ def regenerate():
     if not last_output:
         return jsonify({"error": "No previous output provided."}), 400
 
-    # ✅ Optional: check if user has exceeded limit
-    if has_exceeded_prompt_limit():
-        return jsonify({"error": "Prompt limit exceeded for free users. Please upgrade to Pro."}), 403
+    if has_exceeded_usage():
+        return jsonify({"error": "Usage limit reached. Please upgrade to Pro."}), 403
 
     prompt = "Improve or reword the following real estate content"
     if tweak:
@@ -57,10 +110,9 @@ def regenerate():
         )
         result = response.choices[0].message.content
 
-        # ✅ Count regenerate as usage
         if not session.get("is_pro", False):
-            session["prompt_count"] = session.get("prompt_count", 0) + 1
-            usage_data = {"count": session["prompt_count"], "limit": 5}
+            session["usage_count"] = session.get("usage_count", 0) + 1
+            usage_data = {"count": session["usage_count"], "limit": MAX_USES}
         else:
             usage_data = None
 
@@ -68,77 +120,88 @@ def regenerate():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/generate", methods=["POST"])
 def generate():
-    if has_exceeded_prompt_limit():
-        return jsonify({"error": "Prompt limit exceeded for free users. Please upgrade to Pro."}), 403
+    if has_exceeded_usage():
+        return jsonify({"error": "Usage limit reached. Please upgrade to Pro."}), 403
 
-    data = request.get_json()
-    category_id = data.get("template_id")
-    user_input = data.get("input", "")
+    data = request.json
+    template_id = data.get("template_id")
     tone = data.get("tone", "")
+    user_input = data.get("input", "")
 
-    template_obj = next((tpl for tpl in prompt_templates if tpl["id"] == category_id), None)
-    if not template_obj:
-        return jsonify({"error": "Invalid category selected."}), 400
+    with open("prompt_templates.json") as f:
+        templates = json.load(f)
 
-    prompt = template_obj['template']
-    if user_input:
-        prompt += f"\n\nUser Input: {user_input}"
-    if tone:
-        prompt += f"\n\nPlease write this in a {tone.lower()} tone."
+    template = next((t for t in templates if t["id"] == template_id), None)
+    if not template:
+        return jsonify({"error": "⚠️ Invalid prompt selected."})
+
+    final_prompt = f"{template['template']}\n\nTone: {tone}\n\nExtra input: {user_input}"
 
     try:
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[
+                {"role": "system", "content": "You are a helpful AI for real estate agents."},
+                {"role": "user", "content": final_prompt}
+            ]
         )
-        result = response.choices[0].message.content
+        result = response.choices[0].message.content.strip()
 
-        session["prompt_count"] = session.get("prompt_count", 0) + 1
-
-        usage_data = None
         if not session.get("is_pro", False):
-            usage_data = {"count": session["prompt_count"], "limit": 5}
+            session["usage_count"] = session.get("usage_count", 0) + 1
+            usage_data = {"count": session["usage_count"], "limit": MAX_USES}
+        else:
+            usage_data = None
 
         return jsonify({"result": result, "usage": usage_data})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)})
 
 
-@app.route("/daily-post", methods=["POST"])
-def daily_post():
-    if not session.get("is_pro", False):
-        if session.get("used_daily_post", False):
-            return jsonify({"error": "Free users can only generate 1 Daily Post per day. Upgrade to Pro for unlimited access."}), 403
 
-        # ✅ Track daily used + increment prompt count
-        session["used_daily_post"] = True
-        session["prompt_count"] = session.get("prompt_count", 0) + 1
+@app.route("/draft-client-reply", methods=["POST"])
+def draft_client_reply():
+    if has_exceeded_usage():
+        return jsonify({"error": "Usage limit reached. Upgrade to Pro to continue."}), 403
 
-        usage_data = {
-            "count": session["prompt_count"],
-            "limit": 5
-        }
-    else:
-        usage_data = None
+    data = request.get_json()
+    message = data.get("message", "").strip()
+    tone = data.get("tone", "Professional").strip()
 
-    prompt = "Write a short, engaging social media post for a real estate agent to post today. Make it time-relevant, helpful, and friendly."
+    if not message:
+        return jsonify({"error": "No message provided."}), 400
+
+    prompt = (
+        f"You are a helpful, experienced real estate agent. "
+        f"Reply to the following client message in a {tone.lower()} tone. "
+        f"Keep your response professional, reassuring, and appropriate to the situation.\n\n"
+        f'Client Message: "{message}"\n\n'
+        f"Your reply:"
+    )
 
     try:
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=300,
+            temperature=0.7
         )
-        result = response.choices[0].message.content
-        return jsonify({"result": result, "usage": usage_data})  # ✅ Include usage
+        reply = response.choices[0].message.content.strip()
+
+        if not session.get("is_pro", False):
+            session["usage_count"] = session.get("usage_count", 0) + 1
+            usage_data = {
+                "count": session["usage_count"],
+                "limit": MAX_USES
+            }
+        else:
+            usage_data = None
+
+        return jsonify({"result": reply, "usage": usage_data})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-
-
 
 @app.route("/smart-tweak-helper", methods=["POST"])
 def smart_tweak_helper():
@@ -170,47 +233,10 @@ def smart_tweak_helper():
     except Exception as e:
         return jsonify({"suggestions": [], "error": str(e)}), 500
 
-@app.route("/extract-text-from-image", methods=["POST"])
-def extract_text_from_image():
-    image = request.files.get("image")
-    if not image:
-        return jsonify({"error": "No image uploaded."}), 400
-
-    try:
-        img = Image.open(image.stream)
-        text = pytesseract.image_to_string(img)
-        return jsonify({"text": text.strip()})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route("/draft-client-reply", methods=["POST"])
-def draft_client_reply():
-    if not session.get("is_pro", False) and session.get("used_client_reply", False):
-        return jsonify({"error": "Client reply feature is limited to one-time use for free users. Please upgrade to Pro."}), 403
-
-    session["used_client_reply"] = True
-    data = request.get_json()
-    message = data.get("message", "")
-    if not message:
-        return jsonify({"error": "No message provided."}), 400
-
-    prompt = (
-        "A real estate agent received the following message from a client. Draft a professional, helpful reply that addresses the question clearly.\n\n"
-        f"Client Message:\n{message}"
-    )
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return jsonify({"result": response.choices[0].message.content})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
 @app.route("/api/prompts")
-def get_prompts():
-    return jsonify(prompt_templates)
+def api_prompts():
+    with open("prompt_templates.json") as f:
+        return jsonify(json.load(f))
 
 @app.route("/library")
 def library():
@@ -220,63 +246,35 @@ def library():
 def subscribe():
     try:
         session["is_pro"] = True
-        session["prompt_count"] = 0
-        session["used_daily_post"] = False
-        session["used_client_reply"] = False
+        session["usage_count"] = 0
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             mode='subscription',
             line_items=[{
                 'price': os.getenv("STRIPE_PRICE_ID"),
-                'quantity': 1,
+                'quantity': 1
             }],
             success_url="https://promptagent.onrender.com?success=true",
-            cancel_url="https://promptagent.onrender.com?canceled=true",
+            cancel_url="https://promptagent.onrender.com?canceled=true"
         )
         return jsonify({"url": checkout_session.url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/reset-usage')
-def reset_usage():
-    session['prompt_count'] = 0
-    session['used_daily_post'] = False
-    session['used_client_reply'] = False
-    return "Usage, daily post, and client reply have been reset."
 
-@app.route("/dev/set-pro")
-def dev_set_pro():
+
+@app.route("/dev-pro")
+def dev_pro():
     session.permanent = True
     session["is_pro"] = True
-    session["prompt_count"] = 0
-    session["used_daily_post"] = False
-    session["used_client_reply"] = False
-    return jsonify({"status": "✅ Pro access granted", "session": dict(session)})
+    session["usage_count"] = 0
+    return redirect("/")
 
-@app.route("/dev-set-free")
-def dev_set_free():
+@app.route("/dev-nonpro")
+def dev_nonpro():
+    session.clear()
     session["is_pro"] = False
-    session["prompt_count"] = 0
-    session["used_daily_post"] = False
-    session["used_client_reply"] = False
-    return "🆓 Free mode enabled"
-
-@app.route("/api/user-status")
-def user_status():
-    is_pro = session.get("is_pro", False)
-    response = {"isPro": is_pro}
-    if not is_pro:
-        response["usage"] = {
-            "count": session.get("prompt_count", 0),
-            "limit": 5
-        }
-        response["daily"] = {
-            "used": session.get("used_daily_post", False)
-        }
-        response["client"] = {
-            "used": session.get("used_client_reply", False)
-        }
-    return jsonify(response)
+    return redirect("/")
 
 @app.route("/check-session")
 def check_session():
