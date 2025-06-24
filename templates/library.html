@@ -1,246 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Saved Library</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <style>
-    .editable:hover { background-color: #f0f0f0; cursor: pointer; }
-    .folder-toggle:hover { cursor: pointer; text-decoration: underline; }
-  </style>
-</head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold text-blue-700 mb-4">📚 Saved Library</h1>
-    <a href="/" class="text-blue-500 underline text-sm mb-4 inline-block">← Back to PromptAgent</a>
+{% extends "base.html" %}
+{% block title %}Your Library - PromptAgentRE{% endblock %}
 
-    <div class="flex flex-wrap gap-2 mb-4 items-center">
-      <input id="searchLibrary" type="text" placeholder="Search posts..." class="border p-2 rounded w-full md:w-1/3">
-      <select id="folderFilter" class="border p-2 rounded">
-        <option value="">All Folders</option>
-      </select>
-      <select id="sortBy" class="border p-2 rounded">
+{% block content %}
+<!-- Main Layout -->
+<div class="max-w-7xl mx-auto mt-6 flex px-4 gap-6">
+
+  <!-- Sidebar -->
+  <aside class="folder-sidebar w-64 bg-white p-4 rounded-2xl shadow-xl h-screen overflow-y-auto sticky top-20">
+    <h2 class="text-lg font-semibold text-blue-800 mb-4">📁 Folders</h2>
+    <ul id="folderList" class="space-y-2"></ul>
+
+    <div class="mt-6">
+      <input type="text" id="newFolderInput" placeholder="New folder..." class="border p-2 rounded w-full mb-2 text-sm">
+      <button id="createFolderBtn" class="btn btn-primary w-full text-sm">+ Create Folder</button>
+      <button id="deleteFolderBtn" class="text-red-500 text-xs mt-2 w-full underline">🗑️ Delete Selected Folder</button>
+    </div>
+  </aside>
+
+  <!-- Library Content -->
+  <main class="flex-1">
+    <select id="folderFilter" class="hidden"></select>
+    <h1 class="text-2xl font-bold text-blue-800 mb-2">📁 Your Library</h1>
+    <!-- Toolbar -->
+    <div class="sticky-header px-2 py-4 mb-4 border-b flex flex-col md:flex-row items-start md:items-center gap-4">
+      
+
+      <input id="searchLibrary" type="text" placeholder="Search saved scripts..." class="border p-2 rounded w-full md:w-1/2 text-sm">
+      <select id="sortBy" class="border p-2 rounded text-sm">
         <option value="newest">Sort: Newest</option>
         <option value="oldest">Sort: Oldest</option>
         <option value="name">Sort: Name</option>
         <option value="favorite">Sort: Favorite</option>
       </select>
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" id="favoritesOnly" class="accent-yellow-500"> Favorites Only
+      </label>
     </div>
 
-    <div class="flex items-center gap-2 mb-6">
-      <input type="text" id="newFolderInput" placeholder="New folder name..." class="border p-2 rounded w-full">
-      <button id="createFolderBtn" class="bg-blue-500 text-white text-sm px-3 py-2 rounded">Create Folder</button>
-      <button id="deleteFolderBtn" class="bg-red-500 text-white text-sm px-3 py-2 rounded">Delete Selected Folder</button>
-    </div>
+    <!-- Library Items -->
+    <div id="libraryContainer" class="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3"></div>
 
-    <div id="libraryContainer" class="space-y-6"></div>
-
+    <!-- Clear Button -->
     <div class="text-center mt-6">
-      <button id="clearLibrary" class="text-sm text-red-500 underline">Clear all saved items</button>
+      <button id="clearLibrary" class="text-sm text-red-500 underline">🧹 Clear All Saved Items</button>
+    </div>
+  </main>
+</div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-2xl shadow-xl max-w-2xl w-full relative">
+    <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    <h2 class="text-xl font-bold text-blue-800 mb-2">📝 Saved Script</h2>
+    <div class="text-sm text-gray-500 mb-4" id="modalTimestamp"></div>
+
+    <pre id="modalText" class="whitespace-pre-wrap text-base text-gray-800 font-sans leading-7 bg-white p-4 rounded-xl border border-gray-200 shadow-sm"></pre>
+
+    <div class="mt-4 flex justify-between items-center">
+      <select id="modalFolderDropdown" class="border p-2 rounded text-sm"></select>
+      <div class="space-x-2 flex items-center">
+        <button id="toggleFavoriteModal" class="text-yellow-500 text-lg" title="Toggle Favorite">☆</button>
+        <button id="copyScriptBtn" class="btn btn-secondary text-sm">📋 Copy</button>
+        <button id="deleteScriptBtn" class="text-red-500 text-sm underline">Delete</button>
+      </div>
     </div>
   </div>
+</div>
 
-  <script>
-    const container = document.getElementById("libraryContainer");
-    const folderFilter = document.getElementById("folderFilter");
-    const searchInput = document.getElementById("searchLibrary");
-    const sortBy = document.getElementById("sortBy");
-    const newFolderInput = document.getElementById("newFolderInput");
-    const createFolderBtn = document.getElementById("createFolderBtn");
+<!-- Script Logic -->
+<script src="/static/library.js"></script>
 
-    let openFolders = new Set();
+<!-- Badge + Pro Script -->
+<script>
+  document.addEventListener("DOMContentLoaded", async () => {
+    const subBtn = document.getElementById("subscribeBtn");
+    const badge = document.getElementById("userStatusBadge");
+    const usageCounter = document.getElementById("usageCounter");
 
-    function getFolders() {
-      return JSON.parse(localStorage.getItem("folderList") || "[]");
-    }
-
-    function saveFolders(folders) {
-      localStorage.setItem("folderList", JSON.stringify(folders));
-    }
-
-    function toggleSection(folderId) {
-      document.querySelectorAll(".folder-section").forEach(sec => {
-        const id = sec.dataset.folder;
-        const items = sec.querySelector(".folder-items");
-        if (id === folderId) {
-          const isHidden = items.classList.toggle("hidden");
-          if (!isHidden) openFolders.add(folderId);
-          else openFolders.delete(folderId);
-        } else {
-          items.classList.add("hidden");
-          openFolders.delete(id);
+    if (subBtn) {
+      subBtn.addEventListener("click", async () => {
+        subBtn.textContent = "Redirecting...";
+        try {
+          const res = await fetch("/subscribe", { method: "POST" });
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            alert("Subscription error. Try again.");
+            subBtn.textContent = "Subscribe to Pro";
+          }
+        } catch (err) {
+          alert("Subscription error.");
+          subBtn.textContent = "Subscribe to Pro";
         }
       });
     }
 
-    function loadLibrary() {
-      const all = JSON.parse(localStorage.getItem("library") || "[]");
-      const folders = [...new Set([...getFolders(), "Uncategorized", "Favorites"])]
-        .filter(f => f !== "")
-        .sort();
-      saveFolders(folders.filter(f => f !== "Favorites" && f !== "Uncategorized"));
-
-      const query = searchInput.value.toLowerCase();
-      const selectedFolder = folderFilter.value;
-      let saved = all.filter(i => i.text);
-
-      switch (sortBy.value) {
-        case "oldest": saved.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); break;
-        case "name": saved.sort((a, b) => a.text.localeCompare(b.text)); break;
-        case "favorite": saved.sort((a, b) => (b.favorite || 0) - (a.favorite || 0)); break;
-        default: saved.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); break;
+    try {
+      const res = await fetch("/api/user-status");
+      const data = await res.json();
+      if (data.isPro) {
+        badge.textContent = "Pro User";
+        badge.classList.add("bg-green-100", "text-green-800");
+        badge.classList.remove("bg-yellow-100", "text-yellow-800");
+      } else {
+        badge.textContent = "Free User";
+        badge.classList.add("bg-yellow-100", "text-yellow-800");
+        badge.classList.remove("bg-green-100", "text-green-800");
+        usageCounter.classList.remove("hidden");
+        usageCounter.textContent = `Usage: ${data.usage.count} of ${data.usage.limit}`;
       }
-
-      container.innerHTML = "";
-
-      folders.forEach(folder => {
-        const items = folder === "Favorites"
-          ? saved.filter(i => i.favorite)
-          : saved.filter(i => (i.folder || "Uncategorized") === folder);
-
-        const section = document.createElement("div");
-        section.className = "border-t pt-4 folder-section";
-        section.dataset.folder = folder;
-
-        const header = document.createElement("h2");
-        header.className = `text-lg font-semibold ${folder === "Favorites" ? 'text-yellow-600' : 'text-blue-600'} mb-2 folder-toggle`;
-        header.textContent = `📁 ${folder}`;
-        header.addEventListener("click", () => toggleSection(folder));
-        section.appendChild(header);
-
-        const itemsWrapper = document.createElement("div");
-        itemsWrapper.className = "folder-items hidden";
-
-        if (items.length === 0) {
-          const emptyNote = document.createElement("div");
-          emptyNote.className = "text-sm text-gray-400 italic mb-2";
-          emptyNote.textContent = "No items in this folder yet.";
-          itemsWrapper.appendChild(emptyNote);
-        } else {
-          items.forEach((item, idx) => {
-            const div = document.createElement("div");
-            div.className = "p-4 bg-gray-100 rounded shadow-sm relative mb-2";
-
-            const folderDropdown = document.createElement("select");
-            folderDropdown.className = "border rounded text-sm px-2 py-1 mt-1";
-            getFolders().concat(["Uncategorized"]).forEach(f => {
-              const opt = document.createElement("option");
-              opt.value = f;
-              opt.textContent = f;
-              if ((item.folder || "Uncategorized") === f) opt.selected = true;
-              folderDropdown.appendChild(opt);
-            });
-
-            folderDropdown.addEventListener("change", (e) => {
-              const updatedFolder = e.target.value;
-              const all = JSON.parse(localStorage.getItem("library") || "[]");
-              const originalIndex = all.findIndex(x => x.timestamp === item.timestamp);
-              if (originalIndex > -1) {
-                all[originalIndex].folder = updatedFolder;
-                localStorage.setItem("library", JSON.stringify(all));
-                loadLibrary();
-              }
-            });
-
-            div.innerHTML = `
-              <div class="flex justify-between items-start">
-                <div class="text-sm text-gray-600">Saved: ${new Date(item.timestamp).toLocaleString()}</div>
-                <div class="flex gap-2">
-                  <button onclick="toggleFavorite('${item.timestamp}')" class="text-yellow-500 text-lg">${item.favorite ? '★' : '☆'}</button>
-                  <button onclick="deleteItem(${idx})" class="text-red-500 text-xs underline">Delete</button>
-                </div>
-              </div>
-              <pre class="whitespace-pre-wrap text-sm my-2">${item.text}</pre>
-            `;
-            div.appendChild(folderDropdown);
-            itemsWrapper.appendChild(div);
-          });
-        }
-
-        section.appendChild(itemsWrapper);
-        container.appendChild(section);
-      });
-
-      // Re-open folders that were previously open
-      openFolders.forEach(folderId => {
-        const section = document.querySelector(`div[data-folder='${folderId}'] .folder-items`);
-        if (section) section.classList.remove("hidden");
-      });
+    } catch (err) {
+      badge.textContent = "⚠️ Error";
     }
-
-    function deleteItem(index) {
-      const saved = JSON.parse(localStorage.getItem("library") || "[]");
-      saved.splice(index, 1);
-      localStorage.setItem("library", JSON.stringify(saved));
-      loadLibrary();
-    }
-
-    function toggleFavorite(timestamp) {
-      const saved = JSON.parse(localStorage.getItem("library") || "[]");
-      const i = saved.findIndex(item => item.timestamp === timestamp);
-      if (i > -1) {
-        saved[i].favorite = !saved[i].favorite;
-        localStorage.setItem("library", JSON.stringify(saved));
-        loadLibrary();
-      }
-    }
-
-    function populateFilters() {
-      const folders = getFolders().concat(["Uncategorized", "Favorites"]);
-      folderFilter.innerHTML = '<option value="">All Folders</option>' +
-        folders.map(folder => `<option value="${folder}">${folder}</option>`).join('');
-    }
-
-    document.getElementById("deleteFolderBtn").addEventListener("click", () => {
-      const folderToDelete = folderFilter.value;
-      if (!folderToDelete || folderToDelete === "Favorites") return alert("Select a valid folder to delete.");
-      if (confirm(`Are you sure you want to delete the folder "${folderToDelete}"? Items will move to 'Uncategorized'.`)) {
-        let folders = getFolders().filter(f => f !== folderToDelete);
-        saveFolders(folders);
-        const saved = JSON.parse(localStorage.getItem("library") || "[]");
-        saved.forEach(item => {
-          if (item.folder === folderToDelete) item.folder = "Uncategorized";
-        });
-        localStorage.setItem("library", JSON.stringify(saved));
-        populateFilters();
-        loadLibrary();
-      }
-    });
-
-    createFolderBtn.addEventListener("click", () => {
-      const folderName = newFolderInput.value.trim();
-      if (!folderName) return alert("Enter a folder name.");
-      const folders = getFolders();
-      if (!folders.includes(folderName)) {
-        folders.push(folderName);
-        saveFolders(folders);
-        populateFilters();
-        loadLibrary();
-      }
-      newFolderInput.value = "";
-    });
-
-    document.getElementById("clearLibrary").addEventListener("click", () => {
-      if (confirm("Clear all saved items?")) {
-        localStorage.removeItem("library");
-        loadLibrary();
-        populateFilters();
-      }
-    });
-
-    searchInput.addEventListener("input", loadLibrary);
-    folderFilter.addEventListener("change", loadLibrary);
-    sortBy.addEventListener("change", loadLibrary);
-
-    populateFilters();
-    loadLibrary();
-
-    // Automatically open the "Uncategorized" folder on load
-    setTimeout(() => {
-      openFolders.add("Uncategorized");
-      loadLibrary();
-    }, 50);
-  </script>
-</body>
-</html>
+  });
+</script>
+{% endblock %}

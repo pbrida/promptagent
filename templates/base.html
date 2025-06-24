@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}PromptAgentRE{% endblock %}</title>
+
+  <!-- Favicon and Social Sharing -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/house-icon.png') }}">
+  <meta property="og:title" content="PromptAgentRE - Real Estate Toolkit">
+  <meta property="og:image" content="{{ url_for('static', filename='images/house-icon.png') }}">
+  <meta property="og:description" content="Your real estate content assistant for professional posts, scripts, and replies.">
+
+  <!-- Fonts and Styles -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}">
+</head>
+<body class="bg-gray-100">
+
+<!-- ✅ Shared Navbar -->
+<nav class="bg-white shadow sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <a href="/home" class="flex items-center space-x-2 hover:opacity-90 transition">
+      <img src="{{ url_for('static', filename='images/house-icon.png') }}" alt="PromptAgent Icon" class="w-9 h-9 rounded-md shadow-sm">
+      <span class="text-xl font-bold text-blue-900">PromptAgent<span class="text-yellow-500">RE</span></span>
+    </a>
+    <div class="space-x-4 flex items-center">
+      <a href="/home" class="text-blue-700 hover:text-blue-900 transition font-medium">About</a>
+      <a href="/dashboard" class="text-blue-700 hover:text-blue-900 transition font-medium">Dashboard</a>
+
+{% if request.path not in ['/home', '/legal'] %}
+  <a href="/library" class="text-blue-700 hover:text-blue-900 transition font-medium">Library</a>
+  <span id="userStatusBadge" class="text-sm px-3 py-1 rounded-full">Checking...</span>
+  <span id="usageCounter" class="text-sm text-gray-600 hidden"></span>
+{% endif %}
+
+
+      {% if not session.get('is_pro', False) %}
+        <button id="subscribeBtn" class="btn btn-primary">Subscribe to Pro</button>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="max-w-6xl mx-auto px-6 mt-6 pb-20">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- Footer -->
+<footer class="text-center text-sm text-gray-500 mt-12 py-6">
+  <p>&copy; 2025 PromptAgentRE</p>
+  <p><a href="/legal" class="underline text-blue-600 hover:text-blue-800">Legal & Support</a></p>
+</footer>
+
+
+</body>
+</html>

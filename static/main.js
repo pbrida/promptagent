@@ -23,38 +23,83 @@ function saveToLibrary(content, folderName = "Uncategorized") {
     saved = [];
   }
 
-  saved.push({
+  const newEntry = {
     text: content.trim(),
     timestamp: new Date().toISOString(),
-    folder: folderName,
+    folder: folderName || "Uncategorized",
     tags: [],
     favorite: false
-  });
+  };
 
+  saved.push(newEntry);
   localStorage.setItem("library", JSON.stringify(saved));
+
   alert("✅ Saved to Library!");
+
+  // ✅ This triggers reload if you're on the Library page
+  window.dispatchEvent(new Event("library-updated"));
 }
 
 
-function updateUsageCounter(used, limit) {
-  const el = document.getElementById("usageCounter");
-  const lockMsg = document.getElementById("clientReplyLockedMsg");
 
-  if (!el) return;
+  function loadTemplates() {
+    fetch("/api/prompts")
+      .then(res => res.json())
+      .then(data => {
+        allTemplates = data;
+        const categories = [...new Set(data.map(t => t.category))];
+        const categorySelect = document.getElementById("categoryFilter");
+        const promptSelect = document.getElementById("promptTemplate");
 
-  // Show or hide locked message
-  if (!isProUser && used >= limit) {
-    lockMsg?.classList.remove("hidden");
-  } else {
-    lockMsg?.classList.add("hidden");
+        if (!categorySelect || !promptSelect) return;
+
+        categorySelect.innerHTML = `<option value="">-- All Categories --</option>`;
+        categories.forEach(cat => {
+          const opt = document.createElement("option");
+          opt.value = cat;
+          opt.textContent = cat;
+          categorySelect.appendChild(opt);
+        });
+
+        const populatePromptOptions = (filter = "") => {
+          promptSelect.innerHTML = `<option value="">-- Select a prompt --</option>`;
+          data
+            .filter(t => !filter || t.category === filter)
+            .forEach(t => {
+              const opt = document.createElement("option");
+              opt.value = t.id;
+              opt.textContent = t.label;
+              promptSelect.appendChild(opt);
+            });
+        };
+
+        categorySelect.addEventListener("change", e => {
+          populatePromptOptions(e.target.value);
+        });
+
+        populatePromptOptions();
+      })
+      .catch(err => {
+        console.error("Failed to load prompts:", err);
+      });
   }
 
-  // Update usage counter text
-  el.classList.remove("hidden");
-  el.innerHTML = used >= limit
-    ? `🚫 Use limit reached: <span>${used}</span> of ${limit}`
-    : `🧠 Uses: <span>${used}</span> of ${limit}`;
-}
+  loadTemplates();
+
+  function updateUsageCounter(used, limit) {
+    const el = document.getElementById("usageCounter");
+    const lockMsg = document.getElementById("clientReplyLockedMsg");
+    if (!el) return;
+    if (!isProUser && used >= limit) {
+      lockMsg?.classList.remove("hidden");
+    } else {
+      lockMsg?.classList.add("hidden");
+    }
+    el.classList.remove("hidden");
+    el.innerHTML = used >= limit
+      ? `🚫 Use limit reached: <span>${used}</span> of ${limit}`
+      : `🧠 Uses: <span>${used}</span> of ${limit}`;
+  }
 
   function reflectProStatus(isPro) {
     const el = document.getElementById("usageCounter");
@@ -65,23 +110,29 @@ function updateUsageCounter(used, limit) {
     }
   }
 
-function fetchUserStatus() {
-  fetch("/api/user-status")
-    .then(res => res.json())
-    .then(data => {
-      isProUser = data.isPro;
-      promptUsage = data.usage || promptUsage;
+  function fetchUserStatus() {
+    fetch("/api/user-status")
+      .then(res => res.json())
+      .then(data => {
+        isProUser = data.isPro;
+        promptUsage = data.usage || promptUsage;
+        if (isProUser) {
+          reflectProStatus(true);
+        } else {
+          updateUsageCounter(promptUsage.count, promptUsage.limit);
+        }
+      })
+      .catch(err => {
+        console.error("Failed to fetch user status:", err);
+      });
+  }
 
-      if (isProUser) {
-        reflectProStatus(true);
-      } else {
-        updateUsageCounter(promptUsage.count, promptUsage.limit);
-      }
-    })
-    .catch(err => {
-      console.error("Failed to fetch user status:", err);
-    });
-}
+  document.getElementById("exampleSelector")?.addEventListener("change", e => {
+    const msg = e.target.value;
+    const msgField = document.getElementById("clientMessage");
+    if (msgField && msg) msgField.value = msg;
+  });
+
 
 
   function getInput() {
@@ -112,7 +163,8 @@ function fetchUserStatus() {
     fetch("/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input, tone, template_id })
+      body: JSON.stringify({ input, tone, template: template_id })
+
     })
       .then(res => res.json())
       .then(data => {
@@ -422,5 +474,20 @@ generateReplyBtn: () => {
   }
 })();
 
-  fetchUserStatus();
+  // 🧠 Auto-fill Client Message when selecting an example
+(() => {
+  const exampleSelect = document.getElementById("exampleSelect");
+  const clientMessageBox = document.getElementById("clientMessage");
+
+  if (exampleSelect && clientMessageBox) {
+    exampleSelect.addEventListener("change", (e) => {
+      const selected = e.target.value;
+      if (selected && selected.trim() !== "") {
+        clientMessageBox.value = selected;
+      }
+    });
+  }
+})();
+
+fetchUserStatus();
 });

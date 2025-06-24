@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}Social Media Assistant{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="max-w-6xl mx-auto px-6 mt-6">
+  <h1 class="text-2xl font-bold text-blue-800 mb-2">📲 Social Media Assistant</h1>
+  <p class="text-gray-700 text-sm mb-4">Create high-performing content for your real estate brand. Use the tools below to post smarter, faster, and with confidence.</p>
+</div>
+
+<!-- Tools Grid -->
+<div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <!-- Today's Post -->
+  <div class="bg-white rounded-2xl shadow-xl p-6">
+    <h2 class="text-xl font-semibold text-blue-800 mb-2">📅 Today’s Post</h2>
+    <button id="generateDailyPostBtn" class="btn btn-primary w-full mb-3">✨ Generate Today’s Post</button>
+    <div id="clientLoadingSpinner" class="hidden text-purple-600 text-sm animate-pulse mb-2">⏳ Generating post...</div>
+    <div id="clientReplyLockedMsg" class="hidden text-sm text-red-600 mb-2">🔒 Free post used. <button onclick="goPro()" class="underline">Upgrade to Pro</button></div>
+    <div id="clientReplyOutput" class="bg-white border border-gray-200 rounded-2xl p-5 mb-4 text-base text-gray-800 font-sans leading-7 shadow-sm whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
+    <div class="flex gap-2">
+      <button id="saveBtn" class="btn-mini">💾 Save</button>
+      <button id="copyBtn" class="btn-mini">📋 Copy</button>
+
+      <button id="regenerateClientReplyBtn" class="btn btn-primary">🔁 Regenerate</button>
+    </div>
+  </div>
+
+  <!-- Caption Rewriter -->
+  <div class="bg-white rounded-2xl shadow-xl p-6">
+    <h2 class="text-xl font-semibold text-blue-800 mb-2">✍️ Caption Rewriter</h2>
+    <select id="platformSelect" class="w-full border rounded px-3 py-2 mb-2">
+      <option value="Instagram">Instagram</option>
+      <option value="Facebook">Facebook</option>
+      <option value="LinkedIn">LinkedIn</option>
+      <option value="Twitter">Twitter</option>
+      <option value="TikTok">TikTok</option>
+    </select>
+    <textarea id="captionInput" rows="3" placeholder="Paste your caption to rewrite..." class="w-full border rounded p-2 text-sm mb-2"></textarea>
+    <div class="flex gap-2 mb-3">
+      <button id="rewriteCaptionBtn" class="btn btn-primary flex-1">✨ Rewrite Caption</button>
+      <button id="randomCaptionBtn" class="btn btn-secondary flex-1">🎲 Generate Random</button>
+    </div>
+    <pre id="captionOutput" class="bg-white border border-gray-200 rounded-2xl p-4 mt-3 text-base text-gray-800 font-sans leading-7 shadow-sm whitespace-pre-wrap max-h-60 overflow-y-auto"></pre>
+    <div class="flex justify-end mt-2">
+      <button id="copyCaptionBtn" class="btn-mini">📋 Copy Caption</button>
+    </div>
+  </div>
+
+  <!-- Weekly Post Planner -->
+  <div class="bg-white rounded-2xl shadow-xl p-6 md:col-span-2">
+    <h2 class="text-xl font-semibold text-blue-800 mb-2">🗓️ Weekly Post Planner</h2>
+    <p class="text-gray-700 text-sm mb-4">Plan your content calendar with 7 themed post ideas. Designed for batching, consistency, and creativity.</p>
+    <div class="flex justify-start mb-4">
+      <button id="generateWeeklyPlanBtn" class="btn btn-primary text-sm">🧠 Generate Weekly Plan</button>
+    </div>
+    <div id="weeklyPlanOutput" class="bg-white border border-gray-200 rounded-xl p-4 text-base text-gray-800 font-sans leading-7 shadow-sm whitespace-pre-wrap max-h-96 overflow-y-auto"></div>
+    <div class="flex justify-end mt-2">
+      <button id="copyWeeklyBtn" class="btn-mini">📋 Copy Weekly Plan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const generateBtn = document.getElementById("generateDailyPostBtn");
+  const outputBox = document.getElementById("clientReplyOutput");
+  const loadingSpinner = document.getElementById("clientLoadingSpinner");
+  const lockedMsg = document.getElementById("clientReplyLockedMsg");
+  const regenerateBtn = document.getElementById("regenerateClientReplyBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const copyBtn = document.getElementById("copyBtn");
+  const badge = document.getElementById("userStatusBadge");
+  const subBtn = document.getElementById("subscribeBtn");
+  const platformSelect = document.getElementById("platformSelect");
+  const captionInput = document.getElementById("captionInput");
+  const captionOutput = document.getElementById("captionOutput");
+  const copyCaptionBtn = document.getElementById("copyCaptionBtn");
+  const rewriteCaptionBtn = document.getElementById("rewriteCaptionBtn");
+  const randomCaptionBtn = document.getElementById("randomCaptionBtn");
+  const weeklyPlanOutput = document.getElementById("weeklyPlanOutput");
+  const generateWeeklyPlanBtn = document.getElementById("generateWeeklyPlanBtn");
+  const copyWeeklyBtn = document.getElementById("copyWeeklyBtn");
+
+  let lastGeneratedPost = "";
+  let isPro = false;
+
+  function clean(text) {
+    return text.replace(/As an AI[^.]*\./gi, '').replace(/I'm an AI[^.]*\./gi, '').trim();
+  }
+
+  try {
+    const res = await fetch("/api/user-status");
+    const data = await res.json();
+    isPro = data.isPro;
+    badge.textContent = isPro ? "Pro User" : "Free User";
+    badge.classList.add(isPro ? "bg-green-100" : "bg-yellow-100", isPro ? "text-green-800" : "text-yellow-800");
+    if (!isPro) {
+      regenerateBtn.disabled = true;
+      regenerateBtn.classList.add("opacity-50", "cursor-not-allowed");
+      regenerateBtn.title = "Upgrade to Pro to use Regenerate";
+    }
+  } catch {
+    badge.textContent = "⚠️ Error";
+  }
+
+  generateBtn.addEventListener("click", async () => {
+    outputBox.innerText = "";
+    lockedMsg.classList.add("hidden");
+    loadingSpinner.classList.remove("hidden");
+    try {
+      const res = await fetch("/daily-post", { method: "POST" });
+      const data = await res.json();
+      loadingSpinner.classList.add("hidden");
+      if (res.status === 403 || data.blocked) {
+        lockedMsg.classList.remove("hidden");
+        return;
+      }
+      lastGeneratedPost = data.result;
+      outputBox.innerText = clean(data.result);
+    } catch {
+      loadingSpinner.classList.add("hidden");
+      outputBox.innerText = "⚠️ Something went wrong.";
+    }
+  });
+
+  regenerateBtn.addEventListener("click", async () => {
+    if (!isPro) return alert("Upgrade to Pro to use Regenerate.");
+    if (!lastGeneratedPost) return;
+    outputBox.innerText = "";
+    loadingSpinner.classList.remove("hidden");
+    try {
+      const res = await fetch("/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ last_output: lastGeneratedPost })
+      });
+      const data = await res.json();
+      loadingSpinner.classList.add("hidden");
+      if (data.error) {
+        outputBox.innerText = data.error;
+        lockedMsg.classList.remove("hidden");
+        return;
+      }
+      lastGeneratedPost = data.output;
+      outputBox.innerText = clean(data.output);
+    } catch {
+      loadingSpinner.classList.add("hidden");
+      outputBox.innerText = "⚠️ Something went wrong.";
+    }
+  });
+
+  saveBtn.addEventListener("click", () => {
+    const text = outputBox.innerText.trim();
+    if (!text) return alert("No content to save.");
+    const saved = JSON.parse(localStorage.getItem("library") || "[]");
+    saved.push({ text, timestamp: new Date().toISOString() });
+    localStorage.setItem("library", JSON.stringify(saved));
+    alert("Saved to library!");
+  });
+
+  copyBtn.addEventListener("click", () => {
+    const text = outputBox.innerText.trim();
+    if (!text) return alert("No content to copy.");
+    navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"));
+  });
+
+  copyCaptionBtn.addEventListener("click", () => {
+    const text = captionOutput.innerText.trim();
+    if (!text) return alert("No caption to copy.");
+    navigator.clipboard.writeText(text).then(() => alert("Caption copied!"));
+  });
+
+  copyWeeklyBtn.addEventListener("click", () => {
+    const text = weeklyPlanOutput.innerText.trim();
+    if (!text) return alert("Nothing to copy.");
+    navigator.clipboard.writeText(text).then(() => alert("Weekly plan copied!"));
+  });
+
+  rewriteCaptionBtn.addEventListener("click", async () => {
+    const caption = captionInput.value.trim();
+    const platform = platformSelect.value;
+    if (!caption) return alert("Paste a caption first.");
+    captionOutput.innerText = "♻️ Rewriting...";
+    try {
+      const res = await fetch("/rewrite-caption", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caption, platform })
+      });
+      const data = await res.json();
+      captionOutput.innerText = clean(data.result);
+    } catch {
+      captionOutput.innerText = "⚠️ Failed to rewrite caption.";
+    }
+  });
+
+  randomCaptionBtn.addEventListener("click", async () => {
+    captionOutput.innerText = "🎲 Generating...";
+    try {
+      const res = await fetch("/generate-random-caption", { method: "POST" });
+      const data = await res.json();
+      captionOutput.innerText = clean(data.result);
+    } catch {
+      captionOutput.innerText = "⚠️ Failed to generate caption.";
+    }
+  });
+
+  generateWeeklyPlanBtn.addEventListener("click", async () => {
+    weeklyPlanOutput.innerText = "🧠 Planning your week...";
+    try {
+      const res = await fetch("/generate-weekly-plan", { method: "POST" });
+      const data = await res.json();
+      weeklyPlanOutput.innerText = clean(data.result);
+    } catch {
+      weeklyPlanOutput.innerText = "⚠️ Failed to generate weekly plan.";
+    }
+  });
+
+  if (subBtn) {
+    subBtn.addEventListener("click", async () => {
+      subBtn.textContent = "Redirecting...";
+      try {
+        const res = await fetch("/subscribe", { method: "POST" });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert("Subscription error. Try again.");
+          subBtn.textContent = "Subscribe to Pro";
+        }
+      } catch {
+        alert("Subscription error.");
+        subBtn.textContent = "Subscribe to Pro";
+      }
+    });
+  }
+});
+
+function goPro() {
+  document.getElementById("subscribeBtn").click();
+}
+</script>
+{% endblock %}

@@ -1,182 +1,122 @@
-                                                                                                                           [
+[
   {
-    "id": "buyer-tip-first",
-    "label": "Tip for First-Time Buyers",
-    "template": "Share a helpful tip for someone buying their first home.",
-    "category": "Buyers"
+    "id": "fsbo_call",
+    "category": "Lead Gen",
+    "name": "FSBO Call Script",
+    "template": "Write a confident, helpful cold call script for an agent calling a FSBO (For Sale By Owner) lead. Highlight what the agent can offer that the FSBO may be missing."
   },
   {
-    "id": "buyer-loan-prep",
-    "label": "Preparing for Mortgage",
-    "template": "Explain how buyers can prepare to get approved for a home loan.",
-    "category": "Buyers"
+    "id": "expired_listing",
+    "category": "Lead Gen",
+    "name": "Expired Listing Script",
+    "template": "Write a professional and optimistic phone script for reaching out to a homeowner whose listing recently expired."
   },
   {
-    "id": "buyer-tour-reminder",
-    "label": "Showing Tour Reminder",
-    "template": "Create a friendly reminder post about what buyers should bring to a home tour.",
-    "category": "Buyers"
+    "id": "circle_prospecting",
+    "category": "Lead Gen",
+    "name": "Circle Prospecting Script",
+    "template": "Write a friendly and conversational circle prospecting script for calling homeowners near a recent listing or sale."
   },
   {
-    "id": "seller-staging-tip",
-    "label": "Home Staging Tip",
-    "template": "Share a smart staging tip that helps homes sell faster.",
-    "category": "Sellers"
+    "id": "open_house_followup",
+    "category": "Lead Gen",
+    "name": "Open House Follow-Up Script",
+    "template": "Write a warm and persuasive follow-up call script for someone who attended your open house yesterday."
   },
   {
-    "id": "seller-price-post",
-    "label": "Pricing Strategy Insight",
-    "template": "Explain the importance of pricing a home right when listing.",
-    "category": "Sellers"
+    "id": "buyer_consult",
+    "category": "Lead Gen",
+    "name": "Buyer Consultation Script",
+    "template": "Write a welcoming and professional script for a buyer consultation call to learn their needs and build rapport."
   },
   {
-    "id": "seller-listing-day",
-    "label": "Best Day to List",
-    "template": "Discuss which day of the week is statistically best to list a home and why.",
-    "category": "Sellers"
+    "id": "renter_conversion",
+    "category": "Lead Gen",
+    "name": "Renter to Buyer Script",
+    "template": "Write a script for calling a renter and explaining how they may be able to buy instead of rent, with empathy and clear steps."
   },
   {
-    "id": "just-listed-announcement",
-    "label": "Just Listed",
-    "template": "Announce a new listing with excitement and urgency.",
-    "category": "Marketing"
+    "id": "seller_lead_intro",
+    "category": "Lead Gen",
+    "name": "Seller Lead Intro Script",
+    "template": "Write an introductory script for an agent calling a new seller lead who requested a home valuation."
   },
   {
-    "id": "open-house-reminder",
-    "label": "Open House Invite",
-    "template": "Create a friendly social post inviting people to an open house.",
-    "category": "Marketing"
+    "id": "social_dm_buyer",
+    "category": "Lead Gen",
+    "name": "Social DM to Buyer Lead",
+    "template": "Write a short, engaging social media DM to a potential buyer lead who followed the agent's Instagram."
   },
   {
-    "id": "under-contract-post",
-    "label": "Under Contract Update",
-    "template": "Share the news that a property just went under contract.",
-    "category": "Marketing"
+    "id": "referral_ask",
+    "category": "Lead Gen",
+    "name": "Referral Ask Script",
+    "template": "Write a warm and grateful script asking a past client if they know anyone looking to buy or sell a home."
   },
   {
-    "id": "just-sold-story",
-    "label": "Just Sold Recap",
-    "template": "Write a success story about a recent closing to celebrate with your followers.",
-    "category": "Marketing"
+    "id": "door_knocking_intro",
+    "category": "Lead Gen",
+    "name": "Door-Knocking Script",
+    "template": "Write a friendly and non-pushy door-knocking script for introducing yourself to a neighborhood."
   },
   {
-    "id": "client-preapproval",
-    "label": "What is Pre-Approval?",
-    "template": "Explain the value of getting pre-approved before home shopping.",
-    "category": "Explain It"
+    "id": "just_listed_call",
+    "category": "Lead Gen",
+    "name": "Just Listed Call Script",
+    "template": "Write a short phone script for calling neighbors to let them know about a new listing nearby."
   },
   {
-    "id": "client-escrow",
-    "label": "What is Escrow?",
-    "template": "Break down what escrow means during a real estate transaction.",
-    "category": "Explain It"
+    "id": "just_sold_call",
+    "category": "Lead Gen",
+    "name": "Just Sold Call Script",
+    "template": "Write a phone script for calling nearby homeowners after a home was just sold in the neighborhood."
   },
   {
-    "id": "client-closing-costs",
-    "label": "Closing Costs Explained",
-    "template": "Explain what closing costs are and who typically pays them.",
-    "category": "Explain It"
+    "id": "zillow_lead",
+    "category": "Lead Gen",
+    "name": "Zillow/Portal Buyer Lead Script",
+    "template": "Write a script for following up with a buyer lead who submitted a request on Zillow or Realtor.com."
   },
   {
-    "id": "fall-maintenance",
-    "label": "Fall Maintenance Tip",
-    "template": "Share a helpful seasonal tip for fall home maintenance.",
-    "category": "Seasonal"
+    "id": "home_worth_text",
+    "category": "Lead Gen",
+    "name": "Home Value Text Follow-Up",
+    "template": "Write a text message follow-up for someone who requested a home valuation on your website."
   },
   {
-    "id": "spring-declutter",
-    "label": "Spring Decluttering",
-    "template": "Give your audience a fresh spring decluttering checklist.",
-    "category": "Seasonal"
+    "id": "first_time_buyer",
+    "category": "Lead Gen",
+    "name": "First-Time Buyer Script",
+    "template": "Write a patient and educational script for speaking with a first-time homebuyer who's overwhelmed."
   },
   {
-    "id": "winter-insulation",
-    "label": "Winter Weatherization",
-    "template": "Share a winter tip for keeping energy bills low at home.",
-    "category": "Seasonal"
+    "id": "linkedin_intro",
+    "category": "Lead Gen",
+    "name": "LinkedIn Outreach Script",
+    "template": "Write a professional and non-spammy LinkedIn message to a local professional about real estate services."
   },
   {
-    "id": "holiday-giveaway",
-    "label": "Holiday Giveaway Promo",
-    "template": "Create a cheerful holiday post with a small giveaway for engagement.",
-    "category": "Seasonal"
+    "id": "client_checkin",
+    "category": "Lead Gen",
+    "name": "Past Client Check-In Script",
+    "template": "Write a friendly call script to check in on a past client and subtly ask for referrals."
   },
   {
-    "id": "local-market-report",
-    "label": "Market Update",
-    "template": "Summarize the current housing market stats for your city this month.",
-    "category": "Local"
+    "id": "fb_group_comment",
+    "category": "Lead Gen",
+    "name": "Facebook Group Engagement",
+    "template": "Write a helpful comment for a real estate Facebook group where someone asked about buying or selling."
   },
   {
-    "id": "neighborhood-highlight",
-    "label": "Neighborhood Feature",
-    "template": "Highlight a local neighborhood and why it’s a great place to live.",
-    "category": "Local"
+    "id": "birthday_checkin",
+    "category": "Lead Gen",
+    "name": "Birthday Message Script",
+    "template": "Write a friendly birthday message to a past client or prospect that gently reminds them of your services."
   },
   {
-    "id": "small-biz-shoutout",
-    "label": "Local Business Shoutout",
-    "template": "Feature a local business you love and tag them in your post.",
-    "category": "Local"
-  },
-  {
-    "id": "daily-mindset",
-    "label": "Mindset Motivation",
-    "template": "Share a short motivational post to inspire buyers and sellers today.",
-    "category": "Daily Inspiration"
-  },
-  {
-    "id": "agent-intro-post",
-    "label": "Agent Intro",
-    "template": "Write a warm introduction post for yourself as a real estate agent.",
-    "category": "Personal Branding"
-  },
-  {
-    "id": "agent-bio-fun",
-    "label": "Fun Bio Post",
-    "template": "Share a fun fact or story from your real estate journey.",
-    "category": "Personal Branding"
-  },
-  {
-    "id": "client-review-share",
-    "label": "Client Testimonial",
-    "template": "Turn a client testimonial into a friendly social media post.",
-    "category": "Testimonials"
-  },
-  {
-    "id": "client-review-beforeafter",
-    "label": "Before/After Client Story",
-    "template": "Share a quick story of where your client started and how you helped them win.",
-    "category": "Testimonials"
-  },
-  {
-    "id": "faq-downpayment",
-    "label": "Down Payment Myth",
-    "template": "Dispel a common myth about how much down payment is needed to buy a home.",
-    "category": "FAQs"
-  },
-  {
-    "id": "faq-zillow",
-    "label": "Why Not Zillow?",
-    "template": "Explain gently why buyers shouldn't rely only on Zillow or big portals.",
-    "category": "FAQs"
-  },
-  {
-    "id": "realtor-tip-ethics",
-    "label": "Realtor Ethics Tip",
-    "template": "Share a quick reminder about professionalism and ethics in real estate.",
-    "category": "Agent Tips"
-  },
-  {
-    "id": "realtor-tip-openhouse",
-    "label": "Open House Hosting Tip",
-    "template": "Give advice to new agents on how to host a winning open house.",
-    "category": "Agent Tips"
-  },
-  {
-    "id": "weekend-promo",
-    "label": "Weekend Real Estate Reminder",
-    "template": "Create a weekend-friendly post reminding followers to book showings or check out listings.",
-    "category": "Daily Inspiration"
+    "id": "online_home_search",
+    "category": "Lead Gen",
+    "name": "Online Search Inquiry Script",
+    "template": "Write a script for calling someone who registered for an online home search but hasn’t responded yet."
   }
 ]

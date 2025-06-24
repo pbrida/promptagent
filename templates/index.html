@@ -1,186 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>PromptAgent</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://js.stripe.com/v3/"></script>
-</head>
-<body class="bg-gray-100 p-6">
-  <div class="max-w-xl mx-auto bg-white p-6 rounded shadow">
-    <h1 class="text-2xl font-bold text-blue-700 mb-4">PromptAgent</h1>
+{% extends "base.html" %}
+{% block title %}PromptAgentRE Dashboard{% endblock %}
 
-    <div id="usageCounter" class="text-sm font-medium text-right text-gray-600 mb-2 hidden"></div>
+{% block content %}
+<!-- Dashboard Tiles -->
+<div class="max-w-4xl mx-auto p-6 grid gap-6 md:grid-cols-2">
 
-    <button id="subscribeBtn" class="mt-4 bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 w-full">
-      🔐 Subscribe to PromptAgent Pro
-    </button>
+  <!-- Client Response Assistant -->
+  <a href="/client-response" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">💬 Client Response Assistant</h2>
+    <p class="text-gray-700 text-sm">Turn client questions and objections into polished, professional replies — perfect for buyers, sellers, and common scenarios.</p>
+  </a>
 
-    <button id="dailyPostBtn" class="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full">
-      📅 Generate Today’s Daily Post
-    </button>
+  <!-- Social Media Assistant -->
+  <a href="/daily-post" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">📲 Social Media Assistant</h2>
+    <p class="text-gray-700 text-sm mb-2">Generate and plan consistent content for your real estate brand.</p>
+    <ul class="text-sm text-gray-700 list-disc list-inside">
+      <li>✨ Daily Post Generator</li>
+      <li>♻️ Caption Rewriter</li>
+      <li>🗓️ Weekly Content Planner</li>
+    </ul>
+  </a>
 
-    <!-- ✅ Category Filter -->
-    <label class="block mt-6 mb-2 font-semibold">Filter by Category</label>
-    <select id="categoryFilter" class="w-full p-2 border rounded mb-4">
-      <option value="All">All Categories</option>
-    </select>
+  <!-- Script Generator -->
+  <a href="/script-generator" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">🧠 Script Generator</h2>
+    <p class="text-gray-700 text-sm">Build custom talking points, intros, follow-ups, and messages using templates and tones tailored for real estate professionals.</p>
+  </a>
 
-    <label class="block mb-2 font-semibold">Select Prompt Template</label>
-    <select id="promptTemplate" class="w-full p-2 border rounded mb-4">
-      <option disabled selected value="">Loading templates...</option>
-    </select>
+  <!-- Library -->
+  <a href="/library" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+    <h2 class="text-xl font-bold text-blue-800 mb-2">📁 Your Library</h2>
+    <p class="text-gray-700 text-sm">Access saved replies, posts, and scripts. Organize with tags, folders, and favorites.</p>
+  </a>
 
-    <label class="block mb-2 font-semibold">Select Tone</label>
-    <select id="tone" class="w-full p-2 border rounded mb-4">
-      <option value="">Default (Neutral)</option>
-      <option value="Casual">😎 Casual</option>
-      <option value="Persuasive">🧲 Persuasive</option>
-      <option value="Professional">💼 Professional</option>
-    </select>
-
-    <label class="block mb-2 font-semibold">Your Input</label>
-    <div class="flex items-start gap-2 mb-4">
-      <textarea id="input" class="w-full p-2 border rounded h-24" placeholder="Type your prompt or click 🎙 to speak..."></textarea>
-      <button id="voiceBtn" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded" title="Click to speak">🎙️</button>
-    </div>
-
-    <button id="generateBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full">Generate</button>
-
-    <div id="loadingSpinner" class="hidden mt-2 text-blue-600 text-sm animate-pulse">
-      Generating, please wait...
-    </div>
-
-    <button id="resetUsageBtn" class="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 w-full">🔄 Reset Usage (Dev Only)</button>
-
-    <!-- Tweak + Regenerate -->
-    <div id="regenerateSection" class="hidden mt-4">
-      <label class="block text-sm font-medium mb-1">Tweak the response (optional)</label>
-      <input id="regenerateTweak" class="w-full p-2 border rounded mb-2" placeholder="Add details, change tone, etc..." />
-
-      <div id="tweakFeedback" class="hidden text-green-600 font-semibold text-sm mt-2">
-        ✅ Response updated using your tweak!
-      </div>
-
-      <div id="tweakSuggestions" class="text-xs text-gray-600 mt-1 space-x-2 flex flex-wrap gap-2"></div>
-      <button id="getSuggestionsBtn" class="text-sm bg-gray-200 hover:bg-yellow-200 text-black px-3 py-1 rounded mb-2">
-        💡 Get Smart Suggestions</button>
-
-      <button id="regeneratePromptBtn" class="mt-2 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 w-full">
-        🔁 Regenerate
-      </button>
-    </div>
-
-    <h2 class="mt-6 font-bold">AI Response</h2>
-    <pre id="promptOutput" class="whitespace-pre-wrap bg-gray-200 p-4 rounded mt-2 text-sm"></pre>
-
-    <a href="/library" class="text-blue-500 underline text-sm mt-4 inline-block">📚 View Saved Library</a>
-    <button id="savePromptBtn" class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full">
-      💾 Save Script to Library
-    </button>
-
-    <!-- ✅ Client Messaging Suite -->
-    <div class="mt-10 p-6 bg-white shadow-md rounded-xl">
-      <h2 class="text-xl font-bold mb-4">📬 Client Response Assistant</h2>
-
-      <label class="block text-sm font-medium mb-1">💬 Choose Example Client Message:</label>
-      <select id="exampleMessages" class="w-full border rounded px-3 py-2 mb-4">
-        <option value="">-- Select an example --</option>
-        <option>We’re nervous about interest rates going up.</option>
-        <option>We’re thinking of waiting until next year to buy.</option>
-        <option>Can we find something under $200k still?</option>
-        <option>We already have an agent but might switch.</option>
-        <option>We’re just browsing for now, not serious yet.</option>
-      </select>
-
-      <label class="block text-sm font-medium mb-1">Paste the client message you received:</label>
-      <label for="clientMessage" class="block text-sm font-medium text-gray-700 mb-1">Client Message</label>
-<div class="flex items-center gap-2">
-  <textarea id="clientMessage" rows="3" placeholder="Type your client message or click 🎙 to speak..." class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-  <button id="micClientBtn" class="text-xl" title="Speak message">🎙️</button>
 </div>
 
 
+<!-- Status Badges -->
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const subBtn = document.getElementById("subscribeBtn");
+  const badge = document.getElementById("userStatusBadge");
+  const usageCounter = document.getElementById("usageCounter");
 
-      <label class="block text-sm font-medium mb-1">Select Reply Tone</label>
-      <select id="templateTone" class="w-full border rounded px-3 py-2 mb-4">
-        <option value="">Default</option>
-        <option value="Friendly">Friendly</option>
-        <option value="Direct">Direct</option>
-        <option value="Reassuring">Reassuring</option>
-        <option value="Professional">Professional</option>
-      </select>
-
-      <button id="generateReplyBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded w-full mb-2">
-        ✨ Generate Smart Reply
-      </button>
-
-      <div id="clientLoadingSpinner" class="hidden text-indigo-600 text-sm animate-pulse mb-2">
-        ⏳ Generating reply...
-      </div>
-
-      <div id="clientReplyLockedMsg" class="hidden text-sm text-red-600 mb-2">
-        🔒 You’ve used your free smart reply. <button onclick="goPro()" class="underline">Upgrade to Pro</button>
-      </div>
-
-      <h3 class="text-md font-semibold mb-2">🧠 Suggested Reply</h3>
-      <pre id="clientReplyOutput" class="bg-gray-50 p-4 border rounded mb-2 text-sm whitespace-pre-wrap overflow-auto max-h-64"></pre>
-
-      <div class="flex gap-2 mb-6">
-        <button id="saveBtn" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">💾 Save to Library</button>
-        <button id="regenerateClientReplyBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">🔁 Regenerate</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    fetch("/api/prompts")
-      .then(res => res.json())
-      .then(data => {
-        const allTemplates = data;
-        const cats = ["All", ...new Set(data.map(t => t.category))];
-        const filter = document.getElementById("categoryFilter");
-        const dropdown = document.getElementById("promptTemplate");
-
-        if (filter) {
-          filter.innerHTML = "";
-          cats.forEach(c => {
-            const o = document.createElement("option");
-            o.value = c;
-            o.textContent = c;
-            filter.appendChild(o);
-          });
+  if (subBtn) {
+    subBtn.addEventListener("click", async () => {
+      subBtn.textContent = "Redirecting...";
+      try {
+        const res = await fetch("/subscribe", { method: "POST" });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert("Subscription error. Try again.");
+          subBtn.textContent = "Subscribe to Pro";
         }
-
-        function renderTemplates(category) {
-          dropdown.innerHTML = "";
-          const filtered = category === "All" ? allTemplates : allTemplates.filter(t => t.category === category);
-          filtered.forEach(t => {
-            const o = document.createElement("option");
-            o.value = t.id;
-            o.textContent = t.label;
-            dropdown.appendChild(o);
-          });
-        }
-
-        renderTemplates("All");
-
-        document.getElementById("categoryFilter")?.addEventListener("change", e => {
-          renderTemplates(e.target.value);
-        });
-      })
-      .catch(err => console.error("❌ Error loading prompts:", err));
-
-    document.getElementById("exampleMessages")?.addEventListener("change", () => {
-      const selected = document.getElementById("exampleMessages").value;
-      if (selected) {
-        document.getElementById("clientMessage").value = selected;
+      } catch (err) {
+        alert("Subscription error.");
+        subBtn.textContent = "Subscribe to Pro";
       }
     });
-  </script>
-  <script src="/static/main.js"></script>
+  }
 
-</body>
-</html>
-
+  try {
+    const res = await fetch("/api/user-status");
+    const data = await res.json();
+    if (data.isPro) {
+      badge.textContent = "Pro User";
+      badge.classList.add("bg-green-100", "text-green-800");
+      badge.classList.remove("bg-yellow-100", "text-yellow-800");
+    } else {
+      badge.textContent = "Free User";
+      badge.classList.add("bg-yellow-100", "text-yellow-800");
+      badge.classList.remove("bg-green-100", "text-green-800");
+      usageCounter.classList.remove("hidden");
+      usageCounter.textContent = `Usage: ${data.usage.count} of ${data.usage.limit}`;
+    }
+  } catch (err) {
+    badge.textContent = "⚠️ Error";
+  }
+});
+</script>
+{% endblock %}

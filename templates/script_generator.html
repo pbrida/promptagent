@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Script Generator{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-6 mt-6">
+  <h1 class="text-2xl font-bold text-blue-800 mb-2">🧠 Script Generator</h1>
+
+  <p class="text-gray-700 text-sm mb-4">
+    Choose a script type, add optional context, and instantly create a lead-converting message for any situation.
+  </p>
+
+  <div id="scriptExamples" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-sm"></div>
+
+  <textarea id="scriptUserInput" rows="3" placeholder="Optional: Add specific details here..." class="w-full border rounded p-2 text-sm mb-3"></textarea>
+
+  <button id="generateScriptBtn" class="btn btn-primary w-full mb-3">✨ Generate Script</button>
+
+  <div id="clientLoadingSpinner" class="hidden text-blue-600 text-sm animate-pulse mb-2">⏳ Generating script...</div>
+  <div id="clientReplyLockedMsg" class="hidden text-sm text-red-600 mb-2">
+    🔒 Free script used. <button onclick="goPro()" class="underline">Upgrade to Pro</button>
+  </div>
+
+  <div id="clientReplyOutput" class="bg-white border border-gray-200 rounded-2xl p-5 mb-4 text-base text-gray-800 font-sans leading-7 shadow-sm whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
+
+  <div class="flex gap-2">
+    <button id="saveBtn" class="btn-mini">💾 Save</button>
+    <button id="copyBtn" class="btn-mini">📋 Copy</button>
+    <button id="regenerateClientReplyBtn" class="btn btn-primary">🔁 Regenerate</button>
+  </div>
+</div>
+
+<script>
+let selectedScriptId = "";
+let lastGeneratedScript = "";
+
+function cleanOutput(text) {
+  return text
+    .replace(/As an AI[^.]*\./gi, '')
+    .replace(/I'm an AI[^.]*\./gi, '')
+    .replace(/Great! Here's a script you can use[^\n]*:?\n?-+/gi, '')
+    .replace(/Client: .*?\n/g, '')
+    .replace(/Agent: .*?\n/g, '')
+    .trim();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const exampleContainer = document.getElementById("scriptExamples");
+  const generateBtn = document.getElementById("generateScriptBtn");
+  const regenerateBtn = document.getElementById("regenerateClientReplyBtn");
+  const saveBtn = document.getElementById("saveBtn");
+  const loading = document.getElementById("clientLoadingSpinner");
+  const output = document.getElementById("clientReplyOutput");
+  const locked = document.getElementById("clientReplyLockedMsg");
+  const userInput = document.getElementById("scriptUserInput");
+  const usageCounter = document.getElementById("usageCounter");
+  const badge = document.getElementById("userStatusBadge");
+
+  // Get user status
+  try {
+    const resStatus = await fetch("/api/user-status");
+    const statusData = await resStatus.json();
+    if (statusData.isPro) {
+      badge.textContent = "Pro User";
+      badge.classList.add("bg-green-100", "text-green-800");
+      badge.classList.remove("bg-yellow-100", "text-yellow-800");
+    } else {
+      badge.textContent = "Free User";
+      badge.classList.add("bg-yellow-100", "text-yellow-800");
+      badge.classList.remove("bg-green-100", "text-green-800");
+      usageCounter.classList.remove("hidden");
+      usageCounter.textContent = `Usage: ${statusData.usage.count} of ${statusData.usage.limit}`;
+    }
+  } catch (err) {
+    badge.textContent = "⚠️ Error";
+  }
+
+  // Load script templates
+  const res = await fetch("/api/prompts");
+  const data = await res.json();
+  const leadGenTemplates = data.filter(t => t.category === "Lead Gen");
+
+  leadGenTemplates.forEach(t => {
+    const btn = document.createElement("button");
+    btn.textContent = t.name;
+    btn.className = "bg-blue-100 text-blue-800 px-3 py-2 rounded hover:bg-blue-200 transition";
+    btn.onclick = () => {
+      selectedScriptId = t.id;
+      output.textContent = "";
+      locked.classList.add("hidden");
+      document.querySelectorAll("#scriptExamples button").forEach(b => b.classList.remove("ring-2", "ring-blue-500"));
+      btn.classList.add("ring-2", "ring-blue-500");
+    };
+    exampleContainer.appendChild(btn);
+  });
+
+  const updateUsage = (usage) => {
+    if (usage && usageCounter) {
+      usageCounter.classList.remove("hidden");
+      usageCounter.textContent = `Usage: ${usage.count} of ${usage.limit}`;
+    }
+  };
+
+  async function generateScript() {
+    if (!selectedScriptId) {
+      alert("Please select a script type first.");
+      return;
+    }
+
+    loading.classList.remove("hidden");
+    output.innerText = "";
+    locked.classList.add("hidden");
+
+    const res = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        template_id: selectedScriptId,
+        tone: "Professional",
+        input: userInput.value
+      })
+    });
+
+    const result = await res.json();
+    loading.classList.add("hidden");
+
+    if (res.status === 403 || result.error) {
+      locked.classList.remove("hidden");
+      output.innerText = result.error;
+      updateUsage(result.usage);
+      return;
+    }
+
+    lastGeneratedScript = result.result;
+    output.innerText = cleanOutput(result.result);
+    updateUsage(result.usage);
+  }
+
+  async function regenerateScript() {
+    if (!lastGeneratedScript) return;
+
+    loading.classList.remove("hidden");
+    output.innerText = "";
+
+    const res = await fetch("/regenerate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ last_output: lastGeneratedScript })
+    });
+
+    const result = await res.json();
+    loading.classList.add("hidden");
+
+    if (result.error) {
+      locked.classList.remove("hidden");
+      output.innerText = result.error;
+      return;
+    }
+
+    lastGeneratedScript = result.output;
+    output.innerText = cleanOutput(result.output);
+    updateUsage(result.usage);
+  }
+
+  function saveToLibrary() {
+    const text = output.innerText.trim();
+    if (!text) {
+      alert("No content to save.");
+      return;
+    }
+    const saved = JSON.parse(localStorage.getItem("library") || "[]");
+    saved.push({ text, timestamp: new Date().toISOString() });
+    localStorage.setItem("library", JSON.stringify(saved));
+    alert("Saved to library!");
+  }
+
+  generateBtn.addEventListener("click", generateScript);
+  regenerateBtn.addEventListener("click", regenerateScript);
+  saveBtn.addEventListener("click", saveToLibrary);
+});
+
+function goPro() {
+  document.getElementById("subscribeBtn").click();
+}
+</script>
+{% endblock %}
