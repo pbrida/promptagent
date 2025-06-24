@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{% block title %}PromptAgentRE{% endblock %}</title>
+  <title>PromptAgentRE</title>
 
   <!-- Favicon and Social Sharing -->
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/house-icon.png') }}">
@@ -29,12 +29,11 @@
       <a href="/home" class="text-blue-700 hover:text-blue-900 transition font-medium">About</a>
       <a href="/dashboard" class="text-blue-700 hover:text-blue-900 transition font-medium">Dashboard</a>
 
-{% if request.path not in ['/home', '/legal'] %}
-  <a href="/library" class="text-blue-700 hover:text-blue-900 transition font-medium">Library</a>
-  <span id="userStatusBadge" class="text-sm px-3 py-1 rounded-full">Checking...</span>
-  <span id="usageCounter" class="text-sm text-gray-600 hidden"></span>
-{% endif %}
-
+      {% if request.path not in ['/', '/home', '/legal'] %}
+        <a href="/library" class="text-blue-700 hover:text-blue-900 transition font-medium">Library</a>
+        <span id="userStatusBadge" class="text-sm px-3 py-1 rounded-full">Checking...</span>
+        <span id="usageCounter" class="text-sm text-gray-600 hidden"></span>
+      {% endif %}
 
       {% if not session.get('is_pro', False) %}
         <button id="subscribeBtn" class="btn btn-primary">Subscribe to Pro</button>
@@ -53,7 +52,6 @@
   <p>&copy; 2025 PromptAgentRE</p>
   <p><a href="/legal" class="underline text-blue-600 hover:text-blue-800">Legal & Support</a></p>
 </footer>
-
 
 </body>
 </html>
