@@ -18,6 +18,13 @@ pytesseract.pytesseract.tesseract_cmd = r"C:\\Program Files\\Tesseract-OCR\\tess
 
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "fallback-secret")
+from flask import request, session
+
+@app.before_request
+def grant_local_pro_access():
+    # Automatically grant Pro access when running locally
+    if request.host.startswith("127.0.0.1") or request.host.startswith("localhost"):
+        session['is_pro'] = True
 
 # Constants
 MAX_USES = 5
