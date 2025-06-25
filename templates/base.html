@@ -21,7 +21,7 @@
 <body class="bg-gray-100 font-sans text-gray-800 pt-[env(safe-area-inset-top)]">
 
 <!-- ✅ Global Navbar -->
-<nav class="bg-white shadow sticky top-0 z-50">
+<nav class="bg-white shadow sticky z-50" style="top: env(safe-area-inset-top); padding-top: env(safe-area-inset-top);">
   <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
     <a href="/home" class="flex items-center space-x-2 hover:opacity-90 transition">
       <img src="{{ url_for('static', filename='images/house-icon.png') }}" alt="PromptAgent Icon" class="w-9 h-9 rounded-md shadow-sm">
