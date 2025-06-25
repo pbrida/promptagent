@@ -34,9 +34,9 @@
       {% if request.path not in ['/', '/home', '/legal'] %}
         <a href="/library" class="text-blue-700 hover:text-blue-900 transition font-medium">Library</a>
         <span id="userStatusBadge" class="text-sm px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-gray-700">Checking...</span>
-        <span id="usageCounter" class="text-sm text-gray-600 hidden">Uses: <span>0</span> of 5</span>
 
         {% if not session.get('is_pro', False) %}
+          <span id="usageCounter" class="text-sm text-gray-600">Uses: <span>0</span> of 5</span>
           <button id="subscribeBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded transition shadow">
             Subscribe to Pro
           </button>
