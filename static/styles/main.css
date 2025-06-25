@@ -186,3 +186,10 @@ a:hover {
   background-color: #d1d5db; /* Tailwind gray-300 */
   cursor: pointer;
 }
+
+
+/* ✅ Fix iOS notch overlap on nav/header */
+nav, header {
+  padding-top: env(safe-area-inset-top);
+  box-sizing: border-box;
+}
