@@ -1,9 +1,19 @@
 /* main.css – Sleek SaaS Look for PromptAgentRE (Professional Edition) */
 
+/* ✅ Safe Area Support for iOS notch and insets */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: #f9fafb;
-  
   background-size: cover;
   background-position: center;
   color: #1e293b;
@@ -143,6 +153,7 @@ a:hover {
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
 /* Refined hover for buttons on About page */
 .about-page-btn {
   background-color: #2563eb;
