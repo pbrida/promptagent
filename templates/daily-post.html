@@ -19,10 +19,6 @@
 
     <button id="generateDailyPostBtn" class="btn btn-primary w-full mb-3">✨ Generate Today’s Post</button>
 
-    {% if not session.get('is_pro', False) %}
-      <div id="usageCounter" class="text-sm text-gray-600 mb-2">Uses: <span>0</span> of 5</div>
-    {% endif %}
-
     <div id="clientLoadingSpinner" class="hidden text-purple-600 text-sm animate-pulse mb-2">
       ⏳ Generating post...
     </div>
