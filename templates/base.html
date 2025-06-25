@@ -5,53 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PromptAgentRE</title>
 
-  <!-- Favicon and Social Sharing -->
+  <!-- Favicon & Open Graph -->
   <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/house-icon.png') }}">
   <meta property="og:title" content="PromptAgentRE - Real Estate Toolkit">
   <meta property="og:image" content="{{ url_for('static', filename='images/house-icon.png') }}">
-  <meta property="og:description" content="Your real estate content assistant for professional posts, scripts, and replies.">
+  <meta property="og:description" content="Your real estate content assistant for high-performing posts, polished scripts, and client replies.">
+  <meta name="theme-color" content="#1E3A8A">
 
-  <!-- Fonts and Styles -->
+  <!-- Fonts & Tailwind CSS -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles/main.css') }}">
 </head>
-<body class="bg-gray-100">
 
-<!-- ✅ Shared Navbar -->
+<body class="bg-gray-100 font-sans text-gray-800">
+
+<!-- ✅ Global Navbar -->
 <nav class="bg-white shadow sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+  <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
     <a href="/home" class="flex items-center space-x-2 hover:opacity-90 transition">
       <img src="{{ url_for('static', filename='images/house-icon.png') }}" alt="PromptAgent Icon" class="w-9 h-9 rounded-md shadow-sm">
       <span class="text-xl font-bold text-blue-900">PromptAgent<span class="text-yellow-500">RE</span></span>
     </a>
-    <div class="space-x-4 flex items-center">
+    <div class="flex items-center flex-wrap space-x-4 mt-2 sm:mt-0 text-sm sm:text-base">
       <a href="/home" class="text-blue-700 hover:text-blue-900 transition font-medium">About</a>
       <a href="/dashboard" class="text-blue-700 hover:text-blue-900 transition font-medium">Dashboard</a>
 
       {% if request.path not in ['/', '/home', '/legal'] %}
         <a href="/library" class="text-blue-700 hover:text-blue-900 transition font-medium">Library</a>
-        <span id="userStatusBadge" class="text-sm px-3 py-1 rounded-full">Checking...</span>
-        <span id="usageCounter" class="text-sm text-gray-600 hidden"></span>
-      {% endif %}
+        <span id="userStatusBadge" class="text-sm px-3 py-1 rounded-full bg-gray-100 border border-gray-300 text-gray-700">Checking...</span>
+        <span id="usageCounter" class="text-sm text-gray-600 hidden">Uses: <span>0</span> of 5</span>
 
-      {% if not session.get('is_pro', False) %}
-        <button id="subscribeBtn" class="btn btn-primary">Subscribe to Pro</button>
+        {% if not session.get('is_pro', False) %}
+          <button id="subscribeBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded transition shadow">
+            Subscribe to Pro
+          </button>
+        {% endif %}
       {% endif %}
     </div>
   </div>
 </nav>
 
-<!-- Main Content -->
+<!-- Main Container -->
 <main class="max-w-6xl mx-auto px-6 mt-6 pb-20">
   {% block content %}{% endblock %}
 </main>
 
-<!-- Footer -->
-<footer class="text-center text-sm text-gray-500 mt-12 py-6">
-  <p>&copy; 2025 PromptAgentRE</p>
+<!-- Global Footer -->
+<footer class="text-center text-sm text-gray-500 mt-12 py-6 border-t">
+  <p>&copy; 2025 PromptAgentRE. All rights reserved.</p>
   <p><a href="/legal" class="underline text-blue-600 hover:text-blue-800">Legal & Support</a></p>
 </footer>
+
+<!-- ✅ Shared Scripts -->
+<script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+
+<!-- ✅ Page-specific Scripts -->
+{% block scripts %}{% endblock %}
 
 </body>
 </html>

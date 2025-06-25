@@ -9,27 +9,27 @@
     Choose a script type, add optional context, and instantly create a lead-converting message for any situation.
   </p>
 
-  <div id="scriptExamples" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-sm"></div>
+  <div id="scriptExamples" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4 text-sm" aria-label="Script Type Buttons"></div>
 
-  <textarea id="scriptUserInput" rows="3" placeholder="Optional: Add specific details here..." class="w-full border rounded p-2 text-sm mb-3"></textarea>
+  <textarea id="scriptUserInput" rows="3" placeholder="Optional: Add specific details here..." class="w-full border rounded p-2 text-sm mb-3" aria-label="User Input Context"></textarea>
 
-  <button id="generateScriptBtn" class="btn btn-primary w-full mb-3">✨ Generate Script</button>
+  <button id="generateScriptBtn" class="btn btn-primary w-full mb-3" aria-label="Generate Script">✨ Generate Script</button>
 
   <div id="clientLoadingSpinner" class="hidden text-blue-600 text-sm animate-pulse mb-2">⏳ Generating script...</div>
   <div id="clientReplyLockedMsg" class="hidden text-sm text-red-600 mb-2">
-    🔒 Free script used. <button onclick="goPro()" class="underline">Upgrade to Pro</button>
+    🔒 Free script used. <button id="upgradeBtn" class="underline">Upgrade to Pro</button>
   </div>
 
   <div id="clientReplyOutput" class="bg-white border border-gray-200 rounded-2xl p-5 mb-4 text-base text-gray-800 font-sans leading-7 shadow-sm whitespace-pre-wrap max-h-72 overflow-y-auto"></div>
 
   <div class="flex gap-2">
-    <button id="saveBtn" class="btn-mini">💾 Save</button>
-    <button id="copyBtn" class="btn-mini">📋 Copy</button>
-    <button id="regenerateClientReplyBtn" class="btn btn-primary">🔁 Regenerate</button>
+    <button id="saveBtn" class="btn-mini" aria-label="Save to Library">💾 Save</button>
+    <button id="copyBtn" class="btn-mini" aria-label="Copy to Clipboard">📋 Copy</button>
+    <button id="regenerateClientReplyBtn" class="btn btn-primary" aria-label="Regenerate Script">🔁 Regenerate</button>
   </div>
 </div>
 
-<script>
+<script defer>
 let selectedScriptId = "";
 let lastGeneratedScript = "";
 
@@ -48,12 +48,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const generateBtn = document.getElementById("generateScriptBtn");
   const regenerateBtn = document.getElementById("regenerateClientReplyBtn");
   const saveBtn = document.getElementById("saveBtn");
+  const copyBtn = document.getElementById("copyBtn");
   const loading = document.getElementById("clientLoadingSpinner");
   const output = document.getElementById("clientReplyOutput");
   const locked = document.getElementById("clientReplyLockedMsg");
   const userInput = document.getElementById("scriptUserInput");
   const usageCounter = document.getElementById("usageCounter");
   const badge = document.getElementById("userStatusBadge");
+  const upgradeBtn = document.getElementById("upgradeBtn");
 
   // Get user status
   try {
@@ -173,13 +175,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     alert("Saved to library!");
   }
 
+  function copyToClipboard() {
+    const text = output.innerText.trim();
+    if (!text) {
+      alert("Nothing to copy.");
+      return;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Copied to clipboard!");
+    });
+  }
+
   generateBtn.addEventListener("click", generateScript);
   regenerateBtn.addEventListener("click", regenerateScript);
   saveBtn.addEventListener("click", saveToLibrary);
+  copyBtn.addEventListener("click", copyToClipboard);
+  upgradeBtn.addEventListener("click", () => document.getElementById("subscribeBtn")?.click());
 });
-
-function goPro() {
-  document.getElementById("subscribeBtn").click();
-}
 </script>
 {% endblock %}

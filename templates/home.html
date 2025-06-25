@@ -4,26 +4,26 @@
 {% block content %}
 <div class="bg-white bg-opacity-80 backdrop-blur-lg py-16 px-6 lg:px-12">
   <div class="max-w-5xl mx-auto text-center">
-    <img src="/static/images/house-icon.png" alt="PromptAgentRE" class="mx-auto mb-4 w-16 h-16" />
+    <img src="/static/images/house-icon.png" alt="PromptAgentRE Logo" class="mx-auto mb-4 w-16 h-16" loading="lazy" />
     <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">Unlock Powerful Real Estate Messaging</h1>
     <p class="text-lg text-slate-700 mb-6 max-w-2xl mx-auto">
       PromptAgentRE helps agents post faster, reply smarter, and generate leads — with ready-to-go scripts, captions, and content for every situation.
     </p>
-    <a href="/dashboard" class="btn btn-primary text-lg px-8 py-3 inline-block about-page-btn" aria-label="Start using PromptAgentRE">🚀 Get Started Free</a>
-
+    <a href="/dashboard" class="btn btn-primary text-lg px-8 py-3 inline-block about-page-btn" role="button" aria-label="Start using PromptAgentRE for free">🚀 Get Started Free</a>
   </div>
 </div>
 
-<!-- Embedded Demo Video -->
+<!-- Demo Video -->
 <div class="bg-gray-100 py-3 px-4">
   <div class="max-w-xl mx-auto rounded-md overflow-hidden shadow-sm">
-    <video autoplay muted loop playsinline controls class="w-full h-auto rounded-md" onloadedmetadata="this.playbackRate = 1.75;">
+    <video autoplay muted loop playsinline controls class="w-full h-auto rounded-md" onloadedmetadata="this.playbackRate = 1.75;" aria-label="PromptAgentRE demo video">
       <source src="{{ url_for('static', filename='videos/homepage-demo.mp4') }}" type="video/mp4">
       Your browser does not support the video tag.
     </video>
   </div>
 </div>
 
+<!-- Feature Highlights -->
 <div class="bg-gray-50 py-12">
   <div class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
     <div class="card">
@@ -41,17 +41,18 @@
   </div>
 </div>
 
+<!-- Call to Action -->
 <div class="bg-white py-16 px-6">
   <div class="max-w-4xl mx-auto text-center">
     <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mb-4">Real Results. Real Fast.</h2>
     <p class="text-slate-700 text-base md:text-lg mb-6">
       From brand-new agents to seasoned pros, PromptAgentRE gives you the tools to sound sharp, save time, and stay consistent across your content and conversations.
     </p>
-    <button id="subscribeBtn" class="btn btn-secondary text-lg px-6 py-3 about-page-btn">Upgrade to Pro for $5/mo</button>
+    <button id="subscribeBtn" class="btn btn-secondary text-lg px-6 py-3 about-page-btn" role="button" aria-label="Upgrade to Pro plan for $5/month">Upgrade to Pro for $5/mo</button>
   </div>
 </div>
 
-<!-- Stripe Button Script -->
+<!-- Stripe Subscribe Button Logic -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const subBtn = document.getElementById("subscribeBtn");

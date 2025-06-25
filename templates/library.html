@@ -8,10 +8,10 @@
   <!-- Sidebar -->
   <aside class="folder-sidebar w-64 bg-white p-4 rounded-2xl shadow-xl h-screen overflow-y-auto sticky top-20">
     <h2 class="text-lg font-semibold text-blue-800 mb-4">📁 Folders</h2>
-    <ul id="folderList" class="space-y-2"></ul>
+    <ul id="folderList" class="space-y-2" aria-label="Saved folders list"></ul>
 
     <div class="mt-6">
-      <input type="text" id="newFolderInput" placeholder="New folder..." class="border p-2 rounded w-full mb-2 text-sm">
+      <input type="text" id="newFolderInput" placeholder="New folder..." class="border p-2 rounded w-full mb-2 text-sm" aria-label="New folder name" autofocus>
       <button id="createFolderBtn" class="btn btn-primary w-full text-sm">+ Create Folder</button>
       <button id="deleteFolderBtn" class="text-red-500 text-xs mt-2 w-full underline">🗑️ Delete Selected Folder</button>
     </div>
@@ -21,26 +21,27 @@
   <main class="flex-1">
     <select id="folderFilter" class="hidden"></select>
     <h1 class="text-2xl font-bold text-blue-800 mb-2">📁 Your Library</h1>
+
     <!-- Toolbar -->
     <div class="sticky-header px-2 py-4 mb-4 border-b flex flex-col md:flex-row items-start md:items-center gap-4">
+      <input id="searchLibrary" type="text" placeholder="Search saved scripts..." class="border p-2 rounded w-full md:w-1/2 text-sm" aria-label="Search scripts">
       
-
-      <input id="searchLibrary" type="text" placeholder="Search saved scripts..." class="border p-2 rounded w-full md:w-1/2 text-sm">
-      <select id="sortBy" class="border p-2 rounded text-sm">
+      <select id="sortBy" class="border p-2 rounded text-sm" aria-label="Sort scripts">
         <option value="newest">Sort: Newest</option>
         <option value="oldest">Sort: Oldest</option>
         <option value="name">Sort: Name</option>
         <option value="favorite">Sort: Favorite</option>
       </select>
-      <label class="flex items-center gap-2 text-sm">
+      
+      <label class="flex items-center gap-2 text-sm" for="favoritesOnly">
         <input type="checkbox" id="favoritesOnly" class="accent-yellow-500"> Favorites Only
       </label>
     </div>
 
     <!-- Library Items -->
-    <div id="libraryContainer" class="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3"></div>
+    <div id="libraryContainer" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"></div>
 
-    <!-- Clear Button -->
+    <!-- Clear All -->
     <div class="text-center mt-6">
       <button id="clearLibrary" class="text-sm text-red-500 underline">🧹 Clear All Saved Items</button>
     </div>
@@ -50,14 +51,15 @@
 <!-- Preview Modal -->
 <div id="previewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
   <div class="bg-white p-6 rounded-2xl shadow-xl max-w-2xl w-full relative">
-    <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl">&times;</button>
+    <button id="closeModal" class="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl" aria-label="Close preview">&times;</button>
+    
     <h2 class="text-xl font-bold text-blue-800 mb-2">📝 Saved Script</h2>
     <div class="text-sm text-gray-500 mb-4" id="modalTimestamp"></div>
 
     <pre id="modalText" class="whitespace-pre-wrap text-base text-gray-800 font-sans leading-7 bg-white p-4 rounded-xl border border-gray-200 shadow-sm"></pre>
 
     <div class="mt-4 flex justify-between items-center">
-      <select id="modalFolderDropdown" class="border p-2 rounded text-sm"></select>
+      <select id="modalFolderDropdown" class="border p-2 rounded text-sm" aria-label="Move to folder"></select>
       <div class="space-x-2 flex items-center">
         <button id="toggleFavoriteModal" class="text-yellow-500 text-lg" title="Toggle Favorite">☆</button>
         <button id="copyScriptBtn" class="btn btn-secondary text-sm">📋 Copy</button>
@@ -68,7 +70,8 @@
 </div>
 
 <!-- Script Logic -->
-<script src="/static/library.js"></script>
+<script src="{{ url_for('static', filename='js/library.js') }}" defer></script>
+
 
 <!-- Badge + Pro Script -->
 <script>
@@ -83,13 +86,9 @@
         try {
           const res = await fetch("/subscribe", { method: "POST" });
           const data = await res.json();
-          if (data.url) {
-            window.location.href = data.url;
-          } else {
-            alert("Subscription error. Try again.");
-            subBtn.textContent = "Subscribe to Pro";
-          }
-        } catch (err) {
+          if (data.url) window.location.href = data.url;
+          else throw new Error();
+        } catch {
           alert("Subscription error.");
           subBtn.textContent = "Subscribe to Pro";
         }
@@ -110,9 +109,11 @@
         usageCounter.classList.remove("hidden");
         usageCounter.textContent = `Usage: ${data.usage.count} of ${data.usage.limit}`;
       }
-    } catch (err) {
+    } catch {
       badge.textContent = "⚠️ Error";
     }
   });
+
+  // 🛠 Optional: Add Escape key to close modal in library.js
 </script>
 {% endblock %}

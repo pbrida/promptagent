@@ -6,13 +6,13 @@
 <div class="max-w-4xl mx-auto p-6 grid gap-6 md:grid-cols-2">
 
   <!-- Client Response Assistant -->
-  <a href="/client-response" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+  <a href="/client-response" role="link" aria-label="Open Client Response Assistant" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl focus:outline focus:ring-2">
     <h2 class="text-xl font-bold text-blue-800 mb-2">💬 Client Response Assistant</h2>
     <p class="text-gray-700 text-sm">Turn client questions and objections into polished, professional replies — perfect for buyers, sellers, and common scenarios.</p>
   </a>
 
   <!-- Social Media Assistant -->
-  <a href="/daily-post" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+  <a href="/daily-post" role="link" aria-label="Open Social Media Assistant" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl focus:outline focus:ring-2">
     <h2 class="text-xl font-bold text-blue-800 mb-2">📲 Social Media Assistant</h2>
     <p class="text-gray-700 text-sm mb-2">Generate and plan consistent content for your real estate brand.</p>
     <ul class="text-sm text-gray-700 list-disc list-inside">
@@ -23,63 +23,66 @@
   </a>
 
   <!-- Script Generator -->
-  <a href="/script-generator" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+  <a href="/script-generator" role="link" aria-label="Open Script Generator" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl focus:outline focus:ring-2">
     <h2 class="text-xl font-bold text-blue-800 mb-2">🧠 Script Generator</h2>
     <p class="text-gray-700 text-sm">Build custom talking points, intros, follow-ups, and messages using templates and tones tailored for real estate professionals.</p>
   </a>
 
   <!-- Library -->
-  <a href="/library" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition">
+  <a href="/library" role="link" aria-label="Access Your Library" class="card-tile block bg-white rounded-2xl shadow-xl p-6 transition hover:shadow-2xl focus:outline focus:ring-2">
     <h2 class="text-xl font-bold text-blue-800 mb-2">📁 Your Library</h2>
     <p class="text-gray-700 text-sm">Access saved replies, posts, and scripts. Organize with tags, folders, and favorites.</p>
   </a>
 
 </div>
 
-
 <!-- Status Badges -->
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const subBtn = document.getElementById("subscribeBtn");
-  const badge = document.getElementById("userStatusBadge");
-  const usageCounter = document.getElementById("usageCounter");
+  document.addEventListener("DOMContentLoaded", async () => {
+    const subBtn = document.getElementById("subscribeBtn");
+    const badge = document.getElementById("userStatusBadge");
+    const usageCounter = document.getElementById("usageCounter");
 
-  if (subBtn) {
-    subBtn.addEventListener("click", async () => {
-      subBtn.textContent = "Redirecting...";
-      try {
-        const res = await fetch("/subscribe", { method: "POST" });
-        const data = await res.json();
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert("Subscription error. Try again.");
+    if (subBtn) {
+      subBtn.addEventListener("click", async () => {
+        subBtn.textContent = "Redirecting...";
+        try {
+          const res = await fetch("/subscribe", { method: "POST" });
+          const data = await res.json();
+          if (data.url) {
+            window.location.href = data.url;
+          } else {
+            alert("Subscription error. Try again.");
+            subBtn.textContent = "Subscribe to Pro";
+          }
+        } catch (err) {
+          alert("Subscription error.");
           subBtn.textContent = "Subscribe to Pro";
         }
-      } catch (err) {
-        alert("Subscription error.");
-        subBtn.textContent = "Subscribe to Pro";
-      }
-    });
-  }
-
-  try {
-    const res = await fetch("/api/user-status");
-    const data = await res.json();
-    if (data.isPro) {
-      badge.textContent = "Pro User";
-      badge.classList.add("bg-green-100", "text-green-800");
-      badge.classList.remove("bg-yellow-100", "text-yellow-800");
-    } else {
-      badge.textContent = "Free User";
-      badge.classList.add("bg-yellow-100", "text-yellow-800");
-      badge.classList.remove("bg-green-100", "text-green-800");
-      usageCounter.classList.remove("hidden");
-      usageCounter.textContent = `Usage: ${data.usage.count} of ${data.usage.limit}`;
+      });
     }
-  } catch (err) {
-    badge.textContent = "⚠️ Error";
-  }
-});
+
+    if (!badge) return;
+
+    try {
+      const res = await fetch("/api/user-status");
+      const data = await res.json();
+      if (data.isPro) {
+        badge.textContent = "Pro User";
+        badge.classList.add("bg-green-100", "text-green-800");
+        badge.classList.remove("bg-yellow-100", "text-yellow-800");
+      } else {
+        badge.textContent = "Free User";
+        badge.classList.add("bg-yellow-100", "text-yellow-800");
+        badge.classList.remove("bg-green-100", "text-green-800");
+        if (usageCounter) {
+          usageCounter.classList.remove("hidden");
+          usageCounter.textContent = `Usage: ${data.usage.count} of ${data.usage.limit}`;
+        }
+      }
+    } catch (err) {
+      badge.textContent = "⚠️ Error";
+    }
+  });
 </script>
 {% endblock %}
