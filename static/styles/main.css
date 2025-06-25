@@ -40,12 +40,12 @@ a {
 
 a:hover {
   color: #1d4ed8;
-  background-color: rgba(226, 232, 240, 0.25); /* subtle background */
+  background-color: rgba(226, 232, 240, 0.25);
   transform: translateY(-1px);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-/* Buttons (Updated Colors - No White Buttons) */
+/* Buttons */
 .btn {
   font-weight: 600;
   padding: 0.6rem 1.2rem;
@@ -58,44 +58,44 @@ a:hover {
 }
 
 .btn-primary {
-  background-color: #2563eb; /* Blue-600 */
+  background-color: #2563eb;
   color: #ffffff;
 }
 .btn-primary:hover {
-  background-color: #1d4ed8; /* Blue-700 */
+  background-color: #1d4ed8;
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: #334155; /* Slate-700 */
+  background-color: #334155;
   color: #ffffff;
 }
 .btn-secondary:hover {
-  background-color: #1e293b; /* Slate-800 */
+  background-color: #1e293b;
 }
 
 .btn-success {
-  background-color: #16a34a; /* Green-600 */
+  background-color: #16a34a;
   color: #ffffff;
 }
 .btn-success:hover {
-  background-color: #15803d; /* Green-700 */
+  background-color: #15803d;
 }
 
 .btn-warning {
-  background-color: #facc15; /* Yellow-400 */
+  background-color: #facc15;
   color: #1e293b;
 }
 .btn-warning:hover {
-  background-color: #eab308; /* Yellow-500 */
+  background-color: #eab308;
 }
 
 .btn-danger {
-  background-color: #dc2626; /* Red-600 */
+  background-color: #dc2626;
   color: #ffffff;
 }
 .btn-danger:hover {
-  background-color: #b91c1c; /* Red-700 */
+  background-color: #b91c1c;
 }
 
 /* Cards */
@@ -154,42 +154,48 @@ a:hover {
   letter-spacing: 0.5px;
 }
 
-/* Refined hover for buttons on About page */
+/* About Page Button */
 .about-page-btn {
   background-color: #2563eb;
   color: #ffffff;
   box-shadow: none;
   transform: none;
 }
-
 .about-page-btn:hover {
-  background-color: #1e40af; /* slightly darker blue */
+  background-color: #1e40af;
   color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Mini Buttons – Uniform Copy/Save Style */
+/* Mini Buttons */
 .btn-mini {
-  background-color: #e5e7eb; /* Tailwind gray-200 */
-  color: #1f2937;            /* Tailwind gray-800 */
-  font-size: 0.75rem;        /* text-xs */
-  padding: 0.25rem 0.5rem;   /* py-1 px-2 */
-  border-radius: 0.375rem;   /* rounded */
-  border: 1px solid #d1d5db; /* border-gray-300 */
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* subtle shadow-sm */
+  background-color: #e5e7eb;
+  color: #1f2937;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   font-weight: 500;
   transition: background-color 0.2s ease;
 }
-
 .btn-mini:hover {
-  background-color: #d1d5db; /* Tailwind gray-300 */
+  background-color: #d1d5db;
   cursor: pointer;
 }
 
-
-/* ✅ Fix iOS notch overlap on nav/header */
+/* ✅ iOS Safe Sticky Nav/Header */
 nav, header {
   padding-top: env(safe-area-inset-top);
   box-sizing: border-box;
+}
+
+/* ✅ Sticky Helper Class */
+.sticky-safe {
+  position: sticky;
+  top: env(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
+  z-index: 50;
+  background-color: white;
 }
